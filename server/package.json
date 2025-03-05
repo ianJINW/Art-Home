@@ -1,0 +1,36 @@
+{
+  "name": "shin-sekai",
+  "version": "1.0.0",
+  "description": "An application for anime lovers b animelovers",
+  "keywords": [
+    "Shn-Sekai",
+    "TypeScript",
+    "MongDB",
+    "FullStack"
+  ],
+  "homepage": "https://github.com/ianJINW/Shin-Sekai#readme",
+  "bugs": {
+    "url": "https://github.com/ianJINW/Shin-Sekai/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ianJINW/Shin-Sekai.git"
+  },
+  "license": "MIT",
+  "author": "Njenga Ian Josh, Bryan Mwaura",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.5.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongose": "^0.0.2-security",
+    "multer": "^1.4.5-lts.1"
+  }
+}

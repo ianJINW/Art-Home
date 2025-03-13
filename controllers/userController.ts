@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/userModels";
 import bcrypt from "bcryptjs";
+import { cloudinary } from "../middleware/multer";
 
 const secretKey = process.env.JWT_SECRET as string;
 
@@ -9,6 +10,31 @@ export const register = async (req: Request, res: Response) => {
 	console.log("Request body:", req.body);
 
 	const { email, username, password } = req.body;
+
+	let imageURL = "";
+	if (req.file) {
+		const file = req.file;
+
+		if (!file) {
+			res.status(400).json({ message: "No file uploaded" });
+			return;
+		}
+
+		imageURL = await new Promise<string>((resolve, reject) => {
+			cloudinary.uploader
+				.upload_stream({ upload_preset: "art-gallery" }, (error, result) => {
+					if (result) resolve(result.url);
+					else reject(error);
+				})
+				.end(file.buffer);
+		}).catch((error) => {
+			res.status(500).json({ message: "Image upload failed", error });
+			return "";
+		});
+
+		if (!imageURL) return;
+	}
+
 	if (!email || !username || !password) {
 		res.status(400).json({ message: "Please enter all fields" });
 		return;
@@ -22,7 +48,12 @@ export const register = async (req: Request, res: Response) => {
 		}
 
 		const hashedPassword = await bcrypt.hash(password, 10);
-		const newUser = new User({ email, username, password: hashedPassword });
+		const newUser = new User({
+			email,
+			username,
+			password: hashedPassword,
+			image: imageURL,
+		});
 		await newUser.save();
 
 		res.status(201).json({ message: "User registered successfully" });

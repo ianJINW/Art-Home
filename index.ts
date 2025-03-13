@@ -38,12 +38,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.use(passport.initialize());
+import "./config/passport";
 
 app.use("/api/v1/user", userRouter);
+app.use("/api/v1/art", artRouter);
 
 initializeSocket(server);
-
-app.use("/api/v1/art", artRouter);
 
 app.listen(PORT, () => {
 	console.log(`Server running on port ${PORT}`);

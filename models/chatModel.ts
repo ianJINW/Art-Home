@@ -1,23 +1,21 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Document, Schema } from "mongoose";
 
-const ChatRoomSchema: Schema = new Schema({
-	roomId: {
-		type: String,
-		required: true,
-		unique: true,
-	},
-	artist: {
-		type: mongoose.Schema.Types.ObjectId,
-		ref: "User",
-		required: true,
-	},
-	messages: [
-		{
-			sender: { type: String, required: true },
-			message: { type: String, required: true },
-			createdAt: { type: Date, default: Date.now },
-		},
-	],
+interface IMessage {
+	roomId: string;
+	sender: string;
+	message: string;
+}
+
+interface IChatRoom extends Document {
+	roomId: string;
+	messages: IMessage[];
+}
+
+const chatSchema: Schema = new Schema({
+	roomId: { type: String, required: true },
+	messages: { type: Array, default: [] },
 });
 
-export default mongoose.model("ChatRoom", ChatRoomSchema);
+const ChatRoom = mongoose.model<IChatRoom>("ChatRoom", chatSchema);
+
+export default ChatRoom;

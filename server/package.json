@@ -1,0 +1,62 @@
+{
+	"name": "art-home",
+	"version": "1.0.0",
+	"description": "A home for your art, a place for your heart",
+	"keywords": [
+		"Art-Home",
+		"Njenga",
+		"Ian",
+		"Josh",
+		"TypeScript"
+	],
+	"homepage": "https://github.com/ianJINW/Art-Home#readme",
+	"bugs": {
+		"url": "https://github.com/ianJINW/Art-Home/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ianJINW/Art-Home.git"
+	},
+	"license": "MIT",
+	"author": "Njenga Ian Josh",
+	"type": "commonjs",
+	"main": "index.ts",
+	"scripts": {
+		"start": "nodemon",
+		"test": "jest"
+	},
+	"dependencies": {
+		"bcryptjs": "^3.0.2",
+		"cloudinary": "^1.41.3",
+		"cors": "^2.8.5",
+		"express": "^4.21.2",
+		"helmet": "^8.0.0",
+		"jsonwebtoken": "^9.0.2",
+		"mongoose": "^8.12.1",
+		"morgan": "^1.10.0",
+		"multer": "^1.4.5-lts.1",
+		"multer-storage-cloudinary": "^4.0.0",
+		"passport": "^0.7.0",
+		"passport-jwt": "^4.0.1",
+		"socket.io": "^4.8.1",
+		"winston": "^3.17.0"
+	},
+	"devDependencies": {
+		"@types/bcryptjs": "^2.4.6",
+		"@types/cors": "^2.8.17",
+		"@types/dotenv": "^6.1.1",
+		"@types/express": "^5.0.0",
+		"@types/helmet": "^0.0.48",
+		"@types/jsonwebtoken": "^9.0.9",
+		"@types/mongoose": "^5.11.96",
+		"@types/morgan": "^1.9.9",
+		"@types/multer": "^1.4.12",
+		"@types/node": "^22.13.10",
+		"@types/passport": "^1.0.17",
+		"@types/passport-jwt": "^4.0.1",
+		"dotenv": "^16.4.7",
+		"nodemon": "^3.1.9",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.8.2"
+	}
+}

@@ -70,7 +70,7 @@ export const register = async (req: Request, res: Response) => {
 			res.status(400).json({ message: "User already exists" });
 			return;
 		}
-
+		console.log(imageURL);
 		const hashedPassword = await bcrypt.hash(password, 10);
 		const newUser = new User({
 			email,
@@ -78,6 +78,8 @@ export const register = async (req: Request, res: Response) => {
 			password: hashedPassword,
 			image: imageURL,
 		});
+
+		console.log("New user:", newUser);
 		await newUser.save();
 
 		res.status(201).json({ message: "User registered successfully" });

@@ -13,8 +13,32 @@ export const register = async (req: Request, res: Response) => {
 
 	let imageURL = "";
 	if (req.file) {
-		const file = req.file;
+		if (req.body.imageBase64) {
+			// Handle base64 image
+			const base64Data = req.body.imageBase64.replace(
+				/^data:image\/\w+;base64,/,
+				""
+			);
+			const buffer = Buffer.from(base64Data, "base64");
 
+			// Upload to Cloudinary using stream
+			imageURL = await new Promise<string>((resolve, reject) => {
+				cloudinary.uploader
+					.upload_stream({ upload_preset: "art-gallery" }, (error, result) => {
+						if (result) resolve(result.url);
+						else reject(error);
+					})
+					.end(buffer);
+			}).catch((error) => {
+				res.status(500).json({ message: "Base64 Image upload failed", error });
+				return "";
+			});
+
+			if (!imageURL) return;
+		}
+	} else if (req.file) {
+		// Handle file upload if a file is provided
+		const file = req.file as Express.Multer.File;
 		if (!file) {
 			res.status(400).json({ message: "No file uploaded" });
 			return;
@@ -46,7 +70,7 @@ export const register = async (req: Request, res: Response) => {
 			res.status(400).json({ message: "User already exists" });
 			return;
 		}
-
+		console.log(imageURL);
 		const hashedPassword = await bcrypt.hash(password, 10);
 		const newUser = new User({
 			email,
@@ -54,6 +78,8 @@ export const register = async (req: Request, res: Response) => {
 			password: hashedPassword,
 			image: imageURL,
 		});
+
+		console.log("New user:", newUser);
 		await newUser.save();
 
 		res.status(201).json({ message: "User registered successfully" });
@@ -94,7 +120,7 @@ export const login = async (req: Request, res: Response) => {
 		};
 		const token = jwt.sign(payload, secretKey, { expiresIn: "1h" });
 
-		res.cookie("token", token, { httpOnly: true });
+		res.cookie("accessToken", token, { httpOnly: true });
 		res.json({ message: "Login successful" });
 		return;
 	} catch (error) {

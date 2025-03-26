@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import http from "http";
 import ChatRoom from "../models/chatModel";
+import jwt from "jsonwebtoken";
 
 export const initializeSocket = (server: http.Server) => {
 	const io = new Server(server, {
@@ -9,6 +10,22 @@ export const initializeSocket = (server: http.Server) => {
 			methods: ["GET", "POST"],
 			credentials: true,
 		},
+	});
+
+	io.use((socket, next) => {
+		const token = socket.handshake.auth.token;
+
+		jwt.verify(
+			token,
+			process.env.JWT_SECRET!,
+			async (err: any, decoded: any) => {
+				if (err) {
+					return next(new Error("Invalid token"));
+				}
+				socket.data.user = decoded;
+				next();
+			}
+		);
 	});
 
 	io.on("connection", (socket) => {
@@ -35,14 +52,14 @@ export const initializeSocket = (server: http.Server) => {
 				const { roomId, sender, message } = data;
 				console.log(`Message in room ${roomId} from ${sender}: ${message}`);
 
-				io.to(data.roomId).emit("message", data);
-
 				try {
 					const chatRoom = await ChatRoom.findOne({ roomId });
 
 					if (chatRoom) {
 						chatRoom.messages.push({ roomId, sender, message });
 						await chatRoom.save();
+
+						io.to(data.roomId).emit("message", data);
 					}
 				} catch (error) {
 					console.error("Error", console.error());

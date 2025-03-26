@@ -17,12 +17,6 @@ const frontend = process.env.FRONTEND_URL;
 const PORT = process.env.PORT;
 
 const server = http.createServer(app);
-/* const io = require("socket.io")(server, {
-	cors: {
-		origin: frontend,
-		methods: ["GET", "POST"],
-	},
-}); */
 
 app.use(
 	cors({

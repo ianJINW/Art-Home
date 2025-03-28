@@ -16,10 +16,10 @@ router
 router
 	.route("/:id/like")
 	.post(artController.likeArt)
-	.put(artController.unlikeArt);
+	.delete(artController.unlikeArt);
 router
 	.route("/:id/comment")
 	.post(artController.addComment)
-	.put(artController.deleteComment);
+	.delete(artController.deleteComment);
 
 export default router;

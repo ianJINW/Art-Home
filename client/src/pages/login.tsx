@@ -14,7 +14,7 @@ const Login: React.FC = () => {
     if (user) {
       navigate('/')
     }
-  }, [user, navigate])
+  }, [user])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

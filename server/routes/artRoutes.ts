@@ -1,13 +1,19 @@
 import { Router } from "express";
 import artController from "../controllers/artController";
 import uploads from "../middleware/multer";
+import { validateArtFields, validateObjectId } from "../middleware/validator";
 
 const router = Router();
 
 router
 	.route("/")
-	.get(artController.getAllArt)
-	.post(uploads.single("art"), artController.createArt);
+	.get(validateObjectId, artController.getAllArt)
+	.post(
+		validateObjectId,
+		uploads.single("art"),
+		validateArtFields,
+		artController.createArt
+	);
 router
 	.route("/:id")
 	.get(artController.getArtById)

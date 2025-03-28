@@ -2,10 +2,10 @@ import "./App.css";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/navbar";
 import Home from "./pages/home";
-import About from "./pages/about";
 import Login from "./pages/login";
 import Register from "./pages/register";
 import Chat from "./pages/chat";
+import Gallery from "./pages/gallery";
 
 function App() {
 
@@ -17,7 +17,7 @@ function App() {
 
 				<Routes>
 					<Route path="/" element={<Home />} />
-					<Route path="/about" element={<About />} />
+					<Route path="/gallery" element={<Gallery />} />
 					<Route path="/login" element={<Login />} />
 					<Route path="/register" element={<Register />} />
 					<Route path="/chat" element={<Chat />} />

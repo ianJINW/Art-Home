@@ -9,7 +9,7 @@ const Navbar: React.FC = () => {
 
 	return (
 		<Box className="flex flex-row justify-evenly gap-10 items-center text-white p-4">
-			{user?.image ? (
+			{user?.image && (
 				<Image
 					src={typeof user.image === 'string'
 						? user.image
@@ -19,11 +19,9 @@ const Navbar: React.FC = () => {
 					borderRadius="full"
 					marginRight="2"
 				/>
-			) : (
-				<h3 className="text-lg">Welcome. Feel Art-Home</h3>
 			)}
 
-			<nav className="flex gap-4 items-center">
+			< nav className="flex gap-4 items-center">
 				<Link to="/">Home</Link>
 				<Link to="/gallery">Gallery</Link>
 				<Link to="/chat">Chat</Link>
@@ -37,7 +35,7 @@ const Navbar: React.FC = () => {
 					</>
 				)}
 			</nav>
-		</Box>
+		</Box >
 	);
 };
 

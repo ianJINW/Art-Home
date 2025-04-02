@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import AuthStore from "../stores/auth.store";
+import useAuthStore from "../stores/auth.store";
 import api from "./axios";
 import { useQuery, useMutation } from "@tanstack/react-query";
 
@@ -57,7 +57,7 @@ const getData = async (): Promise<DataResponse> => {
 
 // LoginUser hook
 export const LoginUser = () => {
-	const logIn = AuthStore((state) => state.login);
+	const logIn = useAuthStore((state) => state.login);
 	const navigate = useNavigate();
 
 	return useMutation({

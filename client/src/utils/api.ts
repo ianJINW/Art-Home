@@ -57,15 +57,13 @@ const getData = async (): Promise<DataResponse> => {
 
 // LoginUser hook
 export const LoginUser = () => {
-	const setAuthToken = AuthStore((state) => state.setAuthToken);
-	const setUser = AuthStore((state) => state.setUser);
+	const logIn = AuthStore((state) => state.login);
 	const navigate = useNavigate();
 
 	return useMutation({
 		mutationFn: login,
 		onSuccess: (data) => {
-			setUser({ ...data.user, password: undefined });
-			setAuthToken(data.token);
+			logIn(data.token, data.user);
 			navigate("/");
 			console.log(`Logged in successfully`, data);
 		},

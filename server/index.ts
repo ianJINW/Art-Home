@@ -10,6 +10,7 @@ import http from "http";
 import connectDB from "./config/db";
 import userRouter from "./routes/userRoutes";
 import artRouter from "./routes/artRoutes";
+import artistRouter from "./routes/artistRoutes";
 import { initializeSocket } from "./socket/chat";
 
 const app = express();
@@ -36,6 +37,7 @@ import "./config/passport";
 
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/art", artRouter);
+app.use("/api/v1/artist", artistRouter);
 
 initializeSocket(server);
 

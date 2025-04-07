@@ -2,6 +2,7 @@ import { Server } from "socket.io";
 import http from "http";
 import ChatRoom from "../models/chatModel";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 export const initializeSocket = (server: http.Server) => {
 	const io = new Server(server, {
@@ -12,57 +13,63 @@ export const initializeSocket = (server: http.Server) => {
 		},
 	});
 
-	io.use((socket, next) => {
-		const token = socket.handshake.auth.token;
-
-		jwt.verify(
-			token,
-			process.env.JWT_SECRET!,
-			async (err: any, decoded: any) => {
-				if (err) {
-					return next(new Error("Invalid token"));
-				}
-				socket.data.user = decoded;
-				next();
-			}
-		);
+	io.use(async (socket, next) => {
+		try {
+			const token = socket.handshake.auth.token;
+			const decoded = await jwt.verify(token, process.env.JWT_SECRET!);
+			socket.data.user = decoded;
+			next();
+		} catch (err) {
+			next(new Error("Authentication error"));
+		}
 	});
 
 	io.on("connection", (socket) => {
 		console.log("Connected to socket");
+
 		socket.on("joinRoom", async (roomId: string) => {
 			socket.join(roomId);
 			console.log(`User joined room: ${roomId}`);
 
 			try {
-				const chatRoom = await ChatRoom.findOne({ roomId });
+				let chatRoom = await ChatRoom.findOne({ roomId });
 
 				if (!chatRoom) {
-					const newRoom = new ChatRoom({ roomId });
-					await newRoom.save();
+					chatRoom = new ChatRoom({ roomId });
+					await chatRoom.save();
+					socket.emit("roomCreated", { roomId });
 				}
 			} catch (error) {
 				console.error("Error", error);
+				socket.emit("error", { message: "Failed to join room" });
 			}
 		});
 
 		socket.on(
 			"chatMessage",
-			async (data: { roomId: string; sender: string; message: string }) => {
-				const { roomId, sender, message } = data;
+			async (data: { roomId: string; sender: any; message: string }) => {
+				let { roomId, sender, message } = data;
 				console.log(`Message in room ${roomId} from ${sender}: ${message}`);
 
 				try {
 					const chatRoom = await ChatRoom.findOne({ roomId });
 
 					if (chatRoom) {
-						chatRoom.messages.push({ roomId, sender, message });
-						await chatRoom.save();
-
-						io.to(data.roomId).emit("message", data);
+						if (sender && typeof sender === "string") {
+							sender = new mongoose.Types.ObjectId(sender);
+						}
+						await ChatRoom.addMessage(roomId, {
+							sender,
+							message,
+							timestamp: new Date(),
+						});
+						io.to(roomId).emit("message", data);
+					} else {
+						socket.emit("error", { message: "Room not found" });
 					}
 				} catch (error) {
-					console.error("Error", console.error());
+					console.error("Error", error);
+					socket.emit("error", { message: "Failed to send message" });
 				}
 			}
 		);

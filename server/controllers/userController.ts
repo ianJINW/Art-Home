@@ -12,7 +12,7 @@ export const register = async (req: Request, res: Response) => {
 	const { email, username, password } = req.body;
 
 	let imageURL = "";
-	if (req.file) {
+	if (!req.file) {
 		if (req.body.imageBase64) {
 			// Handle base64 image
 			const base64Data = req.body.imageBase64.replace(

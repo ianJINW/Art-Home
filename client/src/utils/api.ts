@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import AuthStore from "../stores/auth.store";
+import useAuthStore from "../stores/auth.store";
 import api from "./axios";
 import { useQuery, useMutation } from "@tanstack/react-query";
 
@@ -50,22 +50,20 @@ interface DataResponse {
 	[key: string]: string | number | boolean | null | undefined;
 }
 
-const getData = async (): Promise<DataResponse> => {
-	const req = await api.get<DataResponse>("/data");
+const getData = async (url: string): Promise<DataResponse> => {
+	const req = await api.get<DataResponse>(url);
 	return req.data;
 };
 
 // LoginUser hook
 export const LoginUser = () => {
-	const setAuthToken = AuthStore((state) => state.setAuthToken);
-	const setUser = AuthStore((state) => state.setUser);
+	const logIn = useAuthStore((state) => state.login);
 	const navigate = useNavigate();
 
 	return useMutation({
 		mutationFn: login,
 		onSuccess: (data) => {
-			setUser({ ...data.user, password: undefined });
-			setAuthToken(data.token);
+			logIn(data.token, data.user);
 			navigate("/");
 			console.log(`Logged in successfully`, data);
 		},
@@ -92,11 +90,11 @@ export const RegisterUser = () => {
 };
 
 // GetData hook
-export const GetData = () => {
+export const GetData = (url: string) => {
 	return useQuery({
 		queryKey: ["data"],
 		queryFn: async () => {
-			const data = await getData();
+			const data = await getData(url);
 			console.log(`Data fetched successfully`, data);
 			return data;
 		},

@@ -4,22 +4,27 @@ import { formData } from "../utils/api";
 
 interface AuthState {
 	user: formData | null;
-	isLoading: boolean;
-	isAuth: boolean;
 	accessToken: string | null;
-	setAuthToken: (token: string) => void;
-	setUser: (user: formData) => void;
+	login: (token: string, user: formData) => void;
+	logout: () => void;
 }
 
-const AuthStore = create<AuthState>()(
+const useAuthStore = create<AuthState>()(
 	persist(
 		(set) => ({
 			user: null,
-			isAuth: false,
-			isLoading: false,
 			accessToken: null,
-			setAuthToken: (token: string) => set({ accessToken: token }),
-			setUser: (user: formData) => set({ user }),
+			login: (token, user) =>
+				set({
+					accessToken: token,
+					user: user,
+				}),
+			logout: () =>
+				set({
+					user: null,
+					accessToken: null,
+				}),
+		
 		}),
 		{
 			name: "auth-store",
@@ -31,4 +36,4 @@ const AuthStore = create<AuthState>()(
 	)
 );
 
-export default AuthStore;
+export default useAuthStore;

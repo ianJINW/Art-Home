@@ -7,12 +7,11 @@ interface AuthState {
 	accessToken: string | null;
 	login: (token: string, user: formData) => void;
 	logout: () => void;
-	isAuth: () => boolean;
 }
 
 const useAuthStore = create<AuthState>()(
 	persist(
-		(set, get) => ({
+		(set) => ({
 			user: null,
 			accessToken: null,
 			login: (token, user) =>
@@ -25,7 +24,7 @@ const useAuthStore = create<AuthState>()(
 					user: null,
 					accessToken: null,
 				}),
-			isAuth: () => !!get().accessToken,
+		
 		}),
 		{
 			name: "auth-store",

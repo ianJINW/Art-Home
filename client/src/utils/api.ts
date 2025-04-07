@@ -50,8 +50,8 @@ interface DataResponse {
 	[key: string]: string | number | boolean | null | undefined;
 }
 
-const getData = async (): Promise<DataResponse> => {
-	const req = await api.get<DataResponse>("/data");
+const getData = async (url: string): Promise<DataResponse> => {
+	const req = await api.get<DataResponse>(url);
 	return req.data;
 };
 
@@ -90,11 +90,11 @@ export const RegisterUser = () => {
 };
 
 // GetData hook
-export const GetData = () => {
+export const GetData = (url: string) => {
 	return useQuery({
 		queryKey: ["data"],
 		queryFn: async () => {
-			const data = await getData();
+			const data = await getData(url);
 			console.log(`Data fetched successfully`, data);
 			return data;
 		},

@@ -6,15 +6,15 @@ import useAuthStore from "../stores/auth.store";
 const Login: React.FC = () => {
   const [data, setData] = useState({ email: '', password: '' });
   const navigate = useNavigate();
-  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => !!state.accessToken);
   const { mutate, isPending, isError, error } = LoginUser();
 
-
   useEffect(() => {
-    if (user !== null) {
+    if (isAuthenticated) {
       navigate('/')
+      console.log('Hello')
     }
-  }, [user, navigate])
+  }, [isAuthenticated, navigate])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

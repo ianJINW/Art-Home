@@ -15,6 +15,31 @@ root {
 	-moz-osx-font-smoothing: grayscale;
 }
 
+/* Navbar styling */
+.navbar {
+	position: sticky;
+	top: 0;
+	z-index: 50;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1rem;
+	background-color: var(--navbar-bg);
+	color: var(--navbar-text);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar a {
+	color: var(--navbar-link);
+	text-decoration: none;
+	margin: 0 1rem;
+	transition: color 0.3s;
+}
+
+.navbar a:hover {
+	color: var(--navbar-link-hover);
+}
+
 a {
 	font-weight: 500;
 	color: #646cff;
@@ -56,6 +81,14 @@ button:focus-visible {
 	outline: 4px auto -webkit-focus-ring-color;
 }
 
+/* Light and dark mode variables */
+:root {
+	--navbar-bg: bisque;
+	--navbar-text: darkblue;
+	--navbar-link: lightslategray;
+	--navbar-link-hover: darkblue;
+}
+
 @media (prefers-color-scheme: light) {
 	:root {
 		color: #213547;
@@ -66,5 +99,14 @@ button:focus-visible {
 	}
 	button {
 		background-color: #f9f9f9;
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--navbar-bg: #242424;
+		--navbar-text: #ffffff;
+		--navbar-link: lightslategray;
+		--navbar-link-hover: bisque;
 	}
 }

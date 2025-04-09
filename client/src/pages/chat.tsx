@@ -1,29 +1,58 @@
+import useAuthStore from '@/stores/auth.store';
 import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import io from 'socket.io-client';
+import { Socket } from 'socket.io-client';
 
 const Chat: React.FC = () => {
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const user = useAuthStore((state) => state.user);
+  const token = accessToken;
+  const sender = user
+  const [socket, setSocket] = useState<typeof Socket | null>(null);
   const [messages, setMessages] = useState<string[]>([]);
   const [input, setInput] = useState<string>('');
+  const [roomId, setRoomId] = useState<string>('');
   const socketURL = import.meta.env.VITE_APP_BACKEND_URL;
 
+  const { id } = useParams();
+
   useEffect(() => {
-    const newSocket = io(socketURL);
-    setSocket(newSocket);
+    if (id && id !== roomId) {
+      setRoomId(id);
+    }
+  }, [id,roomId]);
 
-    newSocket.on('message', (message: string) => {
-      setMessages((prevMessages) => [...prevMessages, message]);
-    });
+  useEffect(() => {
+    if (token && roomId) {
+      const newSocket = io(socketURL, { auth: { token } });
+      setSocket(newSocket);
 
-    // Cleanup on unmount
-    return () => {
-      newSocket.disconnect();
-    };
-  }, [socketURL]);
+      newSocket.on('connect_error', (err: { message: string }) => {
+        console.error('Connection error:', err.message);
+      });
+
+      newSocket.on('connect', () => {
+        console.log('Connected');
+      });
+
+      newSocket.on('message', (message: string) => {
+        setMessages((prevMessages) => [...prevMessages, message]);
+      });
+
+      newSocket.on('error', (data: { message: string }) => {
+        console.error('Socket error', data.message);
+      });
+
+      return () => {
+        newSocket.disconnect();
+      };
+    }
+  }, [token, roomId, socketURL]);
 
   const sendMessage = () => {
-    if (socket && input.trim()) {
-      socket.emit('message', input);
+    if (socket && input.trim() && roomId && sender) {
+      socket.emit('chatMessage', { roomId, message: input });
       setInput('');
     }
   };

@@ -4,13 +4,13 @@ import { Request, Response } from "express";
 
 export const createChatRoom = async (req: Request, res: Response) => {
 	try {
-		const { participants } = req.body;
+		const { participants, roomName } = req.body;
 		if (!participants || !Array.isArray(participants)) {
 			res.status(400).json({ error: "Invalid participants array" });
 			return;
 		}
 
-		const roomId = participants.sort().join("_");
+		const roomId = roomName ? roomName : participants.sort().join("_");
 		const chatRoom = new ChatRoom({
 			roomId,
 			participants,

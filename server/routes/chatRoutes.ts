@@ -6,9 +6,9 @@ import {
 	getChatHistory,
 } from "../controllers/chatController";
 
-const router = Router();
+const chatRouter = Router();
 
-router.route("/").get(findUserChatRooms).post(createChatRoom);
-router.route("/:id").get(getChatHistory).post(addMessageToRoom);
+chatRouter.route("/").get(findUserChatRooms).post(createChatRoom);
+chatRouter.route("/:id").get(getChatHistory).post(addMessageToRoom);
 
-export { router as ChatRoutes };
+export default chatRouter;

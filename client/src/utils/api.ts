@@ -16,7 +16,7 @@ interface LoginResponse {
 		id: string;
 		username: string;
 		email: string;
-		image?: File | null;
+		image?: string | null;
 	};
 	token: string;
 }
@@ -50,8 +50,17 @@ interface DataResponse {
 	[key: string]: string | number | boolean | null | undefined;
 }
 
-const getData = async (url: string): Promise<DataResponse> => {
-	const req = await api.get<DataResponse>(url);
+const getData = async (url: string, token?: string): Promise<DataResponse> => {
+	const headers = token
+		? {
+				headers: {
+					Authorization: `Bearer ${token}`,
+				},
+		  }
+		: {};
+
+	const req = await api.get<DataResponse>(url, headers);
+
 	return req.data;
 };
 
@@ -63,9 +72,13 @@ export const LoginUser = () => {
 	return useMutation({
 		mutationFn: login,
 		onSuccess: (data) => {
-			logIn(data.token, data.user);
+			logIn(data.token, {
+				...data.user,
+				image: null,
+			});
 			navigate("/");
-			console.log(`Logged in successfully`, data);
+			console.log(data.user); // Log the user from the response
+			console.log(`Logged in successfully`, data.user, data);
 		},
 		onError: (error) => {
 			console.error(`Error logging in`, error.message);
@@ -91,10 +104,12 @@ export const RegisterUser = () => {
 
 // GetData hook
 export const GetData = (url: string) => {
+	const token = useAuthStore((state) => state.accessToken);
+
 	return useQuery({
-		queryKey: ["data"],
+		queryKey: ["data", url],
 		queryFn: async () => {
-			const data = await getData(url);
+			const data = await getData(url, token ?? undefined);
 			console.log(`Data fetched successfully`, data);
 			return data;
 		},

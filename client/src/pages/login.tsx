@@ -2,19 +2,20 @@ import React, { useEffect, useState } from "react";
 import { LoginUser } from "../utils/api";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../stores/auth.store";
+import { Mail, Lock } from "lucide-react";
 
 const Login: React.FC = () => {
-  const [data, setData] = useState({ email: '', password: '' });
+  const [data, setData] = useState({ email: "", password: "" });
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => !!state.accessToken);
   const { mutate, isPending, isError, error } = LoginUser();
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/')
-      console.log('Hello')
+      navigate("/");
+      console.log("Hello");
     }
-  }, [isAuthenticated, navigate])
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -25,7 +26,11 @@ const Login: React.FC = () => {
       password: data.password,
     };
 
-    mutate(formData);
+    mutate(formData, {
+      onSuccess: (data) => {
+        console.log("User data:", data.user);
+      },
+    });
   };
 
   return (
@@ -34,29 +39,61 @@ const Login: React.FC = () => {
         <legend>
           <h1>Login</h1>
         </legend>
-        <form onSubmit={handleSubmit} className="flex flex-col m-1 p-1 text-black radius-100 border-gray-600">
-          <label>Email</label>
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col m-1 p-1 text-black radius-100 border-gray-600"
+        >
+          <label className="flex items-center gap-2">
+            <Mail size={20} />
+            Email
+          </label>
           <input
             type="email"
             className="border border-gray-400 rounded-md p-2 mt-1"
             onChange={(e) => setData({ ...data, email: e.target.value })}
           />
 
-          <label>Password</label>
+          <label className="flex items-center gap-2 mt-4">
+            <Lock size={20} />
+            Password
+          </label>
           <input
             type="password"
             className="border border-gray-400 rounded-md p-2 mt-1"
             onChange={(e) => setData({ ...data, password: e.target.value })}
           />
 
-          <button className="cursor-pointer" type="submit">
-            {isPending ? `Logging in ...` : 'Login'}
+          <button
+            className="cursor-pointer bg-blue-500 text-white rounded-md p-2 mt-4 hover:bg-blue-600"
+            type="submit"
+          >
+            {isPending ? `Logging in ...` : "Login"}
           </button>
-          {isError && <p>Error: {error instanceof Error ? error.message : "An unknown error occurred"}</p>}
+          {isError && (
+            <p className="text-red-500 mt-2">
+              Error: {error instanceof Error ? error.message : "An unknown error occurred"}
+            </p>
+          )}
         </form>
       </fieldset>
     </div>
   );
 };
 
+const Logout: React.FC = () => {
+  const logout = useAuthStore((state) => state.logout);
+  const navigate = useNavigate()
+
+  return (
+    <fieldset>
+      <legend>Log out</legend>
+      <button onClick={() => navigate('/')}>Not really.</button>
+
+      <button onClick={logout}>Yes, I want to log out</button>
+    </fieldset>
+
+  )
+}
+
 export default Login;
+export { Logout }

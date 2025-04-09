@@ -11,9 +11,9 @@ interface AuthState {
 
 const useAuthStore = create<AuthState>()(
 	persist(
-		(set) => ({
-			user: null,
-			accessToken: null,
+		(set, get) => ({
+			user: get()?.user || null,
+			accessToken: get()?.accessToken || null,
 			login: (token, user) =>
 				set({
 					accessToken: token,
@@ -24,7 +24,6 @@ const useAuthStore = create<AuthState>()(
 					user: null,
 					accessToken: null,
 				}),
-		
 		}),
 		{
 			name: "auth-store",

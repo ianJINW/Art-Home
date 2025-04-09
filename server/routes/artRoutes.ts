@@ -7,7 +7,7 @@ const router = Router();
 
 router
 	.route("/")
-	.get(validateObjectId, artController.getAllArt)
+	.get(artController.getAllArt)
 	.post(
 		validateObjectId,
 		uploads.single("art"),

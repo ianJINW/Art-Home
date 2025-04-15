@@ -4,7 +4,7 @@ import { GetData } from '@/utils/api';
 import { Link } from 'react-router-dom';
 
 const Chats: React.FC = () => {
-  const { data, isPending, isError, error } = GetData("chat");
+  const { data, isPending, isError, error } = GetData(`chat`);
 
   if (isPending) {
     return <div>Loading chats...</div>;

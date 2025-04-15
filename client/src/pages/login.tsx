@@ -3,6 +3,7 @@ import { LoginUser } from "../utils/api";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../stores/auth.store";
 import { Mail, Lock } from "lucide-react";
+import api from "@/utils/axios";
 
 const Login: React.FC = () => {
   const [data, setData] = useState({ email: "", password: "" });
@@ -84,12 +85,26 @@ const Logout: React.FC = () => {
   const logout = useAuthStore((state) => state.logout);
   const navigate = useNavigate()
 
+  const logOutFN = async () => {
+    try {
+      await api.post("user/logout", { withCredentials: true }, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      logout();
+      navigate("/");
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+
+  }
   return (
     <fieldset>
       <legend>Log out</legend>
       <button onClick={() => navigate('/')}>Not really.</button>
 
-      <button onClick={logout}>Yes, I want to log out</button>
+      <button onClick={logOutFN}>Yes, I want to log out</button>
     </fieldset>
 
   )

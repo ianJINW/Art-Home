@@ -12,6 +12,7 @@ const ArtistSchema: Schema = new Schema({
 	bio: { type: String, required: true },
 	works: { type: Schema.Types.ObjectId, ref: "Art" },
 	socials: { type: [String], required: true },
+	user: { type: Schema.Types.ObjectId, ref: "User" },
 });
 
 const Artist = model<IArtist>("Artist", ArtistSchema);

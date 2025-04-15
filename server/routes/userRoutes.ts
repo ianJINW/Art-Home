@@ -4,6 +4,8 @@ import {
 	getUser,
 	getUsers,
 	login,
+	logout,
+	refreshToken,
 	register,
 	updateUser,
 } from "../controllers/userController";
@@ -18,6 +20,9 @@ userRouter
 	.get(getUser)
 	.put(uploads.single("profile"), updateUser)
 	.delete(deleteUser);
+
+userRouter.post("/logout", logout);
+userRouter.post("/refresh", refreshToken);
 
 userRouter.route("/login").post(login);
 

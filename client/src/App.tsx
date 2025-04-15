@@ -11,7 +11,6 @@ function App() {
 
 	return (
 		<main className="flex flex-col m-1 p-1 text-black ">
-			<h1>Art Home</h1>
 			<Router>
 				<Navbar />
 

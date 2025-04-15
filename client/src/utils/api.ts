@@ -77,7 +77,7 @@ export const LoginUser = () => {
 				image: null,
 			});
 			navigate("/");
-			console.log(data.user); // Log the user from the response
+			console.log(data.user);
 			console.log(`Logged in successfully`, data.user, data);
 		},
 		onError: (error) => {

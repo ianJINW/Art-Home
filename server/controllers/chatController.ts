@@ -72,6 +72,7 @@ export const getChatHistory = async (req: Request, res: Response) => {
 
 export const findUserChatRooms = async (req: Request, res: Response) => {
 	try {
+		const token = req.cookies.accessToken;
 		const { userId } = req.params;
 		if (!userId) {
 			res.status(400).json({ error: "User ID is required" });

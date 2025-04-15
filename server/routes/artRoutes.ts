@@ -14,6 +14,7 @@ router
 		validateArtFields,
 		artController.createArt
 	);
+
 router
 	.route("/:id")
 	.get(artController.getArtById)
@@ -23,6 +24,7 @@ router
 	.route("/:id/like")
 	.post(artController.likeArt)
 	.delete(artController.unlikeArt);
+
 router
 	.route("/:id/comment")
 	.post(artController.addComment)

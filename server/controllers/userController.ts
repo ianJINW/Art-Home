@@ -119,8 +119,20 @@ export const login = async (req: Request, res: Response) => {
 			isAdmin: user.isAdmin,
 		};
 		const token = jwt.sign(payload, secretKey, { expiresIn: "1h" });
+		const refreshToken = jwt.sign(payload, secretKey, { expiresIn: "5h" });
 
-		res.cookie("accessToken", token, { httpOnly: true });
+		res.cookie("accessToken", token, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === "production",
+			sameSite: "strict",
+		});
+
+		res.cookie("refreshToken", refreshToken, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === "production",
+			sameSite: "strict",
+		});
+
 		res.json({
 			message: "Login successful",
 			user: {
@@ -134,6 +146,36 @@ export const login = async (req: Request, res: Response) => {
 		return;
 	} catch (error) {
 		res.status(500).json({ message: `An error occurred, ${error}` });
+		return;
+	}
+};
+
+export const refreshToken = async (req: Request, res: Response) => {
+	const refreshToken = req.cookies.refreshToken;
+
+	if (!refreshToken) {
+		res.status(401).json({ message: " RefreshToken does not exist" });
+		return;
+	}
+
+	try {
+		const payload = jwt.verify(refreshToken, secretKey) as {
+			id: string;
+			email: string;
+			username: string;
+		};
+
+		const newToken = jwt.sign(
+			{
+				id: payload.id,
+				email: payload.email,
+				username: payload.username,
+			},
+			secretKey,
+			{ expiresIn: "1h" }
+		);
+	} catch (error) {
+		res.status(401).json({ message: "Invalid refresh token" });
 		return;
 	}
 };
@@ -198,5 +240,17 @@ export const deleteUser = async (req: Request, res: Response) => {
 	} catch (error) {
 		res.status(500).json({ message: "An error occurred", error });
 		return;
+	}
+};
+
+export const logout = async (req: Request, res: Response) => {
+	try {
+		console.log(req.body, "nice")
+		res.clearCookie("refreshToken", { httpOnly: true });
+		res.clearCookie("accessToken", { httpOnly: true });
+		res.status(200).json({ message: "Logged out successfully" });
+	} catch (error) {
+		console.error("Error during logout:", error);
+		res.status(500).json({ message: "Failed to log out", error });
 	}
 };

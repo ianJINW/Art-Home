@@ -1,7 +1,9 @@
 import { Types } from "mongoose";
 import ChatRoom, { IMessage } from "../models/chatModel";
 import { Request, Response } from "express";
+import jwt from "jsonwebtoken";
 
+// Create a new chat room
 export const createChatRoom = async (req: Request, res: Response) => {
 	try {
 		const { participants, roomName } = req.body;
@@ -24,6 +26,7 @@ export const createChatRoom = async (req: Request, res: Response) => {
 	}
 };
 
+// Add a message to a chat room
 export const addMessageToRoom = async (req: Request, res: Response) => {
 	try {
 		const { roomId, senderId, message } = req.body;
@@ -38,11 +41,17 @@ export const addMessageToRoom = async (req: Request, res: Response) => {
 			timestamp: new Date(),
 		};
 
-		const updatedRoom = await ChatRoom.addMessage(roomId, newMessage);
+		const updatedRoom = await ChatRoom.findOneAndUpdate(
+			{ roomId },
+			{ $push: { messages: newMessage } },
+			{ new: true }
+		);
+
 		if (!updatedRoom) {
 			res.status(404).json({ error: "Chat room not found" });
 			return;
 		}
+
 		res.status(200).json({ updatedRoom });
 	} catch (error) {
 		console.error("Error adding message to room:", error);
@@ -50,6 +59,7 @@ export const addMessageToRoom = async (req: Request, res: Response) => {
 	}
 };
 
+// Get chat history for a room
 export const getChatHistory = async (req: Request, res: Response) => {
 	try {
 		const { roomId } = req.params;
@@ -63,6 +73,7 @@ export const getChatHistory = async (req: Request, res: Response) => {
 			res.status(404).json({ error: "Chat room not found" });
 			return;
 		}
+
 		res.status(200).json({ messages: chatRoom.messages || [] });
 	} catch (error) {
 		console.error("Error fetching chat history:", error);
@@ -70,9 +81,25 @@ export const getChatHistory = async (req: Request, res: Response) => {
 	}
 };
 
+// Find all chat rooms for a user
 export const findUserChatRooms = async (req: Request, res: Response) => {
 	try {
-		const { userId } = req.params;
+		const token = req.cookies.accessToken;
+		if (!token) {
+			res.status(401).json({ error: "Unauthorized: Token is missing" });
+			return;
+		}
+
+		const secretKey = process.env.JWT_SECRET as string;
+		let decodedToken;
+		try {
+			decodedToken = jwt.verify(token, secretKey) as { id: string };
+		} catch (err) {
+			res.status(401).json({ error: "Unauthorized: Invalid token" });
+			return;
+		}
+
+		const userId = decodedToken.id;
 		if (!userId) {
 			res.status(400).json({ error: "User ID is required" });
 			return;
@@ -81,6 +108,7 @@ export const findUserChatRooms = async (req: Request, res: Response) => {
 		const chatRooms = await ChatRoom.find({ participants: userId })
 			.populate("participants", "username email")
 			.sort("-updatedAt");
+
 		res.status(200).json({ chatRooms });
 	} catch (error) {
 		console.error("Error finding user chat rooms:", error);

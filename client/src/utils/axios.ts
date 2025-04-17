@@ -21,4 +21,39 @@ api.interceptors.request.use(
 	}
 );
 
+api.interceptors.response.use(
+	(response) => {
+		return response;
+	},
+	async (error) => {
+		const originalRequest = error.config;
+
+		if (error.response?.status === 401 && !originalRequest._retry) {
+			originalRequest._retry = true;
+
+			try {
+				// Call the refresh token endpoint
+				const { data } = await axios.post(
+					`${backend}/user/refresh`,
+					{},
+					{ withCredentials: true }
+				);
+
+				// Save the new access token
+				localStorage.setItem("auth-store", data.accessToken);
+
+				// Retry the original request with the new access token
+				originalRequest.headers["Authorization"] = `Bearer ${data.accessToken}`;
+				return api(originalRequest);
+			} catch (refreshError) {
+				console.error("Refresh token failed:", refreshError);
+				localStorage.removeItem("auth-store");
+				window.location.href = "/login";
+			}
+		}
+
+		return Promise.reject(error);
+	}
+);
+
 export default api;

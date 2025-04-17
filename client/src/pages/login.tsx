@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { LoginUser } from "../utils/api";
+import { LoginUser, LogoutUser } from "../utils/api";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../stores/auth.store";
 import { Mail, Lock } from "lucide-react";
@@ -80,20 +80,28 @@ const Login: React.FC = () => {
   );
 };
 
-const Logout: React.FC = () => {
-  const logout = useAuthStore((state) => state.logout);
-  const navigate = useNavigate()
+export const Logout: React.FC = () => {
+  const { mutate: logout, isPending } = LogoutUser();
+
+  const handleLogout = () => {
+    logout();
+  };
 
   return (
-    <fieldset>
-      <legend>Log out</legend>
-      <button onClick={() => navigate('/')}>Not really.</button>
-
-      <button onClick={logout}>Yes, I want to log out</button>
+    <fieldset className="border-dotted border-4 border-red-500 rounded-xl p-4">
+      <legend>
+        <h1>
+          Log Out</h1>
+      </legend>
+      <button
+        onClick={handleLogout}
+        className="cursor-pointer bg-red-500 text-white rounded-md p-2 mt-4 hover:bg-red-600"
+        disabled={isPending}
+      >
+        {isPending ? "Logging out..." : "Yes, I want to log out"}
+      </button>
     </fieldset>
-
-  )
-}
+  );
+};
 
 export default Login;
-export { Logout }

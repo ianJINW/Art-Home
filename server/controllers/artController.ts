@@ -22,7 +22,7 @@ class ArtController {
 			const artId = req.params.id;
 			const artPiece = await Art.findById(artId)
 				.populate("artist")
-				.populate("comments");
+				.populate("likes");
 
 			if (!artPiece) {
 				res

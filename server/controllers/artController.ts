@@ -5,7 +5,7 @@ import { cloudinary } from "../middleware/multer";
 class ArtController {
 	public async getAllArt(req: Request, res: Response): Promise<void> {
 		try {
-			const artPieces = await Art.find().populate("likes").populate("user")
+			const artPieces = await Art.find()
 				.populate("artist")
 				.sort({ createdAt: -1 });
 			res.status(200).json({ message: "All art pieces", artPieces });
@@ -22,7 +22,7 @@ class ArtController {
 			const artId = req.params.id;
 			const artPiece = await Art.findById(artId)
 				.populate("artist")
-				.populate("comments");
+				.populate("likes");
 
 			if (!artPiece) {
 				res

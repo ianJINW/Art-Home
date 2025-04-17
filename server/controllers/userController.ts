@@ -245,6 +245,7 @@ export const deleteUser = async (req: Request, res: Response) => {
 
 export const logout = async (req: Request, res: Response) => {
 	try {
+		console.log(req.body, "nice")
 		res.clearCookie("refreshToken", { httpOnly: true });
 		res.clearCookie("accessToken", { httpOnly: true });
 		res.status(200).json({ message: "Logged out successfully" });

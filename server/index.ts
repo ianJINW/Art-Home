@@ -6,6 +6,7 @@ import cors from "cors";
 import helmet from "helmet";
 import passport from "passport";
 import http from "http";
+import cookieParser from "cookie-parser";
 
 import connectDB from "./config/db";
 import userRouter from "./routes/userRoutes";
@@ -32,6 +33,7 @@ connectDB();
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
 
 app.use(passport.initialize());
 import "./config/passport";

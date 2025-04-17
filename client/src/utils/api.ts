@@ -45,6 +45,19 @@ const register = async (credentials: formData): Promise<RegisterResponse> => {
 	return req.data;
 };
 
+const logOutFN = async () => {
+
+    try {
+      await api.post("user/logout", { withCredentials: true }, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+
+  }
 // Get data API call
 interface DataResponse {
 	[key: string]: string | number | boolean | null | undefined;
@@ -86,6 +99,21 @@ export const LoginUser = () => {
 	});
 };
 
+export const LogoutUser = ()=>{
+	const logout = useAuthStore((state) => state.logout);
+	const navigate = useNavigate();
+
+	return useMutation({
+		mutationFn: logoutFn,
+		onSuccess: {
+			logout()
+			navigate('/gallery')
+			console.log('Logged out successFully')
+		},onError: (error)=> {
+			console.log('This is stupid')
+		}
+	})
+}
 // RegisterUser hook
 export const RegisterUser = () => {
 	const navigate = useNavigate();

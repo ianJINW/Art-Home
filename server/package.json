@@ -23,11 +23,13 @@
 	"main": "index.ts",
 	"scripts": {
 		"start": "nodemon",
-		"test": "jest"
+		"test": "jest",
+		"dev": "nodemon"
 	},
 	"dependencies": {
 		"bcryptjs": "^3.0.2",
 		"cloudinary": "^1.41.3",
+		"cookie-parser": "^1.4.7",
 		"cors": "^2.8.5",
 		"express": "^4.21.2",
 		"helmet": "^8.0.0",
@@ -44,6 +46,7 @@
 	},
 	"devDependencies": {
 		"@types/bcryptjs": "^2.4.6",
+		"@types/cookie-parser": "^1.4.8",
 		"@types/cors": "^2.8.17",
 		"@types/dotenv": "^6.1.1",
 		"@types/express": "^5.0.0",

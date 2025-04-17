@@ -8,72 +8,88 @@ const Navbar: React.FC = () => {
   const isAuthenticated = useAuthStore((state) => !!state.accessToken);
 
   return (
-    <div className="container mx-auto flex flex-row justify-between items-center py-4 px-6">
-      {/* Logo */}
-      <Link to="/" className="text-2xl font-bold text-blue-500 hover:text-blue-400">
-        Art-Home
-      </Link>
-
-      {/* Navigation Links */}
-      <nav className="flex gap-6 items-center no-wrap">
+    <nav className="bg-white dark:bg-gray-800 shadow-md">
+      <div className="container mx-auto flex justify-between items-center py-4 px-6">
+      {user?.image ? (
+        <img
+          src={
+            typeof user.image === "string"
+              ? user.image
+              : URL.createObjectURL(user.image)
+          }
+          alt={user.username}
+          className="w-10 h-10 rounded-full border-2 border-orange-500 dark:border-blue-400 object-cover"
+        />
+      ) : (
         <Link
-          to="/gallery"
-          className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+          to="/"
+          className="text-2xl font-bold text-orange-500 dark:text-blue-400 hover:opacity-80 transition-opacity"
         >
-          <Image size={20} />
-          Gallery
+          Art-Home
         </Link>
-        <Link
-          to="/chat"
-          className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
-        >
-          <MessageCircle size={20} />
-          Chat
-        </Link>
-      </nav>
+      )}
 
-      {/* User Section */}
-      <div className="flex items-center gap-4">
-        {user?.image && (
-          <img
-            src={
-              typeof user.image === "string"
-                ? user.image
-                : URL.createObjectURL(user.image)
-            }
-            alt={user.username}
-            className="w-10 h-10 rounded-full border-2 border-blue-500 object-cover"
-          />
-        )}
-
-        {isAuthenticated ? (
+        {/* Navigation Links */}
+        <div className="flex gap-6 items-center">
           <Link
-            to="/logout"
-            className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors"
+            to="/gallery"
+            className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-orange-500 dark:hover:text-blue-400 transition-colors"
           >
-            <LogOut size={20} />
-            Log out
+            <Image size={20} />
+            Gallery
           </Link>
-        ) : (
-          <>
+          <Link
+            to="/chat"
+            className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-orange-500 dark:hover:text-blue-400 transition-colors"
+          >
+            <MessageCircle size={20} />
+            Chat
+          </Link>
+        </div>
+
+        {/* User Section */}
+        <div className="flex flex-col items-center gap-4">
+          {user?.image && (
+            <img
+              src={
+                typeof user.image === "string"
+                  ? user.image
+                  : URL.createObjectURL(user.image)
+              }
+              alt={user.username}
+              className="w-10 h-10 rounded-full border-2 border-orange-500 dark:border-blue-400 object-cover"
+            />
+          )}
+
+          {isAuthenticated ? (
             <Link
-              to="/login"
-              className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+              to="/logout"
+              className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors"
             >
-              <LogIn size={20} />
-              Login
+              <LogOut size={20} />
+              Log out
             </Link>
-            <Link
-              to="/register"
-              className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
-            >
-              <UserPlus size={20} />
-              Register
-            </Link>
-          </>
-        )}
+          ) : (
+            <div className="flex gap-10 justify-around ">
+              <Link
+                to="/login"
+                className="flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
+              >
+                <LogIn size={20} />
+                Login
+              </Link>
+              <Link
+                to="/register"
+                className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
+              >
+                <UserPlus size={20} />
+                Register
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </nav>
   );
 };
 

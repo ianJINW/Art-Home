@@ -10,7 +10,7 @@ export interface formData {
 	image?: File | null;
 }
 
-// Login API call
+// Login API call 
 interface LoginResponse {
 	user: {
 		id: string;
@@ -99,21 +99,23 @@ export const LoginUser = () => {
 	});
 };
 
-export const LogoutUser = ()=>{
-	const logout = useAuthStore((state) => state.logout);
-	const navigate = useNavigate();
 
-	return useMutation({
-		mutationFn: logoutFn,
-		onSuccess: {
-			logout()
-			navigate('/gallery')
-			console.log('Logged out successFully')
-		},onError: (error)=> {
-			console.log('This is stupid')
-		}
-	})
-}
+export const LogoutUser = () => {
+    const logout = useAuthStore((state) => state.logout);
+    const navigate = useNavigate();
+
+    return useMutation({
+        mutationFn: logOutFN, // Corrected function reference
+        onSuccess: () => {
+            logout(); // Clear user data from the store
+            navigate("/gallery"); // Redirect to the gallery page
+            console.log("Logged out successfully");
+        },
+        onError: (error) => {
+            console.error("Error during logout:", error);
+        },
+    });
+};
 // RegisterUser hook
 export const RegisterUser = () => {
 	const navigate = useNavigate();

@@ -32,7 +32,7 @@ const Home: React.FC = () => {
 			{/* Footer */}
 			<footer className="bg-gray-800 text-white py-4">
 				<div className="max-w-5xl mx-auto text-center">
-					<p>&copy; 2023 Art Home. All rights reserved.</p>
+					<p>&copy; 2025 Art Home. All rights reserved.</p>
 				</div>
 			</footer>
 		</>

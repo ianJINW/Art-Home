@@ -19,7 +19,7 @@ export const createArtist = async (req: Request, res: Response) => {
 
 	// Validate required fields
 	if (!name || !bio || !socials || !Array.isArray(socials)) {
-		res.status(400).json({
+		res.status(400).json({ 
 			message:
 				"Name, bio, and socials are required, and socials must be an array",
 		});
@@ -76,7 +76,7 @@ export const getArtist = async (req: Request, res: Response) => {
 			message: "Invalid artist ID",
 		});
 		return;
-	}
+	}=== "Anonymous" ? "View" : "Buy Now"
 
 	try {
 		const artist = await Artist.findById(id).populate("works").populate("user");

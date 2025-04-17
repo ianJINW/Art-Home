@@ -6,72 +6,64 @@ import { cloudinary } from "../middleware/multer";
 
 const secretKey = process.env.JWT_SECRET as string;
 
+const handleImageUpload = async (req: Request): Promise<string | null> => {
+	try {
+		if (req.file) {
+			// Handle file upload
+			const file = req.file as Express.Multer.File;
+			return await uploadToCloudinary(file.buffer);
+		} else if (req.body.imageBase64) {
+			// Handle base64 image upload
+			const base64Data = req.body.imageBase64.replace(/^data:image\/\w+;base64,/, "");
+			const buffer = Buffer.from(base64Data, "base64");
+			return await uploadToCloudinary(buffer);
+		}
+		return ""; // No image provided
+	} catch (error) {
+		console.error("Image upload failed:", error);
+		return null;
+	}
+};
+
+const uploadToCloudinary = async (buffer: Buffer): Promise<string> => {
+	return new Promise<string>((resolve, reject) => {
+		cloudinary.uploader.upload_stream({ upload_preset: "art-gallery" }, (error, result) => {
+			if (result) resolve(result.url);
+			else reject(error);
+		}).end(buffer);
+	});
+};
+
 export const register = async (req: Request, res: Response) => {
 	console.log("Request body:", req.body);
 
 	const { email, username, password } = req.body;
 
-	let imageURL = "";
-	if (!req.file) {
-		if (req.body.imageBase64) {
-			// Handle base64 image
-			const base64Data = req.body.imageBase64.replace(
-				/^data:image\/\w+;base64,/,
-				""
-			);
-			const buffer = Buffer.from(base64Data, "base64");
-
-			// Upload to Cloudinary using stream
-			imageURL = await new Promise<string>((resolve, reject) => {
-				cloudinary.uploader
-					.upload_stream({ upload_preset: "art-gallery" }, (error, result) => {
-						if (result) resolve(result.url);
-						else reject(error);
-					})
-					.end(buffer);
-			}).catch((error) => {
-				res.status(500).json({ message: "Base64 Image upload failed", error });
-				return "";
-			});
-
-			if (!imageURL) return;
-		}
-	} else if (req.file) {
-		// Handle file upload if a file is provided
-		const file = req.file as Express.Multer.File;
-		if (!file) {
-			res.status(400).json({ message: "No file uploaded" });
-			return;
-		}
-
-		imageURL = await new Promise<string>((resolve, reject) => {
-			cloudinary.uploader
-				.upload_stream({ upload_preset: "art-gallery" }, (error, result) => {
-					if (result) resolve(result.url);
-					else reject(error);
-				})
-				.end(file.buffer);
-		}).catch((error) => {
-			res.status(500).json({ message: "Image upload failed", error });
-			return "";
-		});
-
-		if (!imageURL) return;
-	}
-
+	// Validate required fields
 	if (!email || !username || !password) {
 		res.status(400).json({ message: "Please enter all fields" });
-		return;
-	}
+		return
+	}  
 
 	try {
+		// Check if the user already exists
 		const existingUser = await User.findOne({ email });
 		if (existingUser) {
 			res.status(400).json({ message: "User already exists" });
-			return;
+			return
 		}
-		console.log(imageURL);
+
+		// Handle image upload (if provided)
+		const imageURL = await handleImageUpload(req);
+		if (imageURL === null) {
+			res.status(500).json({ message: "Image upload failed" });
+			return
+		}
+
+		// Hash the password
 		const hashedPassword = await bcrypt.hash(password, 10);
+
+		// Create and save the new user
 		const newUser = new User({
 			email,
 			username,
@@ -82,11 +74,12 @@ export const register = async (req: Request, res: Response) => {
 		console.log("New user:", newUser);
 		await newUser.save();
 
-		res.status(201).json({ message: "User registered successfully" });
-		return;
+		res.status(201).json({ message: "User registered successfulreturnly" });
+		return
 	} catch (error) {
-		res.status(500).json({ message: "An error occurred", error });
-		return;
+		console.error("Error during registration:", error);
+		res.status(500).json({ message: "An error occurred during registration", error });
+		return
 	}
 };
 
@@ -116,6 +109,7 @@ export const login = async (req: Request, res: Response) => {
 			id: user.id,
 			email: user.email,
 			username: user.username,
+			image: user.image, 
 			isAdmin: user.isAdmin,
 		};
 		const token = jwt.sign(payload, secretKey, { expiresIn: "1h" });

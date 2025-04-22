@@ -46,18 +46,16 @@ const register = async (credentials: formData): Promise<RegisterResponse> => {
 };
 
 const logOutFN = async () => {
+	try {
+		await api.post("user/logout", null, {
+			withCredentials: true, // Ensure cookies are sent with the request
+		});
+	} catch (error) {
+		console.error("Error logging out:", error);
+		throw error; // Re-throw the error to handle it in the hook
+	}
+};
 
-    try {
-      await api.post("user/logout", { withCredentials: true }, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-    } catch (error) {
-      console.error("Error logging out:", error);
-    }
-
-  }
 // Get data API call
 interface DataResponse {
 	[key: string]: string | number | boolean | null | undefined;
@@ -99,21 +97,26 @@ export const LoginUser = () => {
 	});
 };
 
-export const LogoutUser = ()=>{
+export const LogoutUser = () => {
 	const logout = useAuthStore((state) => state.logout);
 	const navigate = useNavigate();
 
 	return useMutation({
-		mutationFn: logoutFn,
-		onSuccess: {
-			logout()
-			navigate('/gallery')
-			console.log('Logged out successFully')
-		},onError: (error)=> {
-			console.log('This is stupid')
-		}
-	})
-}
+		mutationFn: logOutFN,
+		onSuccess: () => {
+			logout(); // Clear user data from the store
+			navigate("/gallery"); // Redirect to the gallery page
+			console.log("Logged out successfully");
+		},
+		onError: (error) => {
+			console.error(
+				"Error logging out:",
+				error instanceof Error ? error.message : error
+			);
+		},
+	});
+};
+
 // RegisterUser hook
 export const RegisterUser = () => {
 	const navigate = useNavigate();

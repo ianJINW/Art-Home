@@ -5,6 +5,7 @@ import { formData } from "../utils/api";
 interface AuthState {
 	user: formData | null;
 	accessToken: string | null;
+	isDark: boolean;
 	login: (token: string, user: formData) => void;
 	logout: () => void;
 }
@@ -14,6 +15,7 @@ const useAuthStore = create<AuthState>()(
 		(set, get) => ({
 			user: get()?.user || null,
 			accessToken: get()?.accessToken || null,
+			isDark: false,
 			login: (token, user) =>
 				set({
 					accessToken: token,

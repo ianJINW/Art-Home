@@ -1,8 +1,10 @@
-import { Request, Response } from "express";
-import jwt from "jsonwebtoken";
-import User from "../models/userModels";
+import validator from "validator";
 import bcrypt from "bcryptjs";
 import { cloudinary } from "../middleware/multer";
+import jwt from "jsonwebtoken";
+
+import User from "../models/userModels";
+import { Request, Response } from "express";
 
 const secretKey = process.env.JWT_SECRET as string;
 
@@ -11,17 +13,38 @@ export const register = async (req: Request, res: Response) => {
 
 	const { email, username, password } = req.body;
 
+	// Validate input
+	if (!email || !username || !password) {
+		res.status(400).json({ message: "Please enter all fields" });
+		console.log("hello");
+		return;
+	}
+
+	if (!validator.isEmail(email)) {
+		res.status(400).json({ message: "Invalid email format" });
+		console.log("hapsa");
+		return;
+	}
+
+	if (password.length < 8) {
+		res
+			.status(400)
+			.json({ message: "Password must be at least 8 characters long" });
+		console.log("again with the passwords");
+		return;
+	}
+
 	let imageURL = "";
-	if (!req.file) {
+
+	// Handle image upload
+	try {
 		if (req.body.imageBase64) {
-			// Handle base64 image
 			const base64Data = req.body.imageBase64.replace(
 				/^data:image\/\w+;base64,/,
 				""
 			);
 			const buffer = Buffer.from(base64Data, "base64");
 
-			// Upload to Cloudinary using stream
 			imageURL = await new Promise<string>((resolve, reject) => {
 				cloudinary.uploader
 					.upload_stream({ upload_preset: "art-gallery" }, (error, result) => {
@@ -29,49 +52,38 @@ export const register = async (req: Request, res: Response) => {
 						else reject(error);
 					})
 					.end(buffer);
-			}).catch((error) => {
-				res.status(500).json({ message: "Base64 Image upload failed", error });
-				return "";
 			});
+		} else if (req.file) {
+			const file = req.file as Express.Multer.File;
 
-			if (!imageURL) return;
+			imageURL = await new Promise<string>((resolve, reject) => {
+				cloudinary.uploader
+					.upload_stream({ upload_preset: "art-gallery" }, (error, result) => {
+						if (result) resolve(result.url);
+						else reject(error);
+					})
+					.end(file.buffer);
+			});
 		}
-	} else if (req.file) {
-		// Handle file upload if a file is provided
-		const file = req.file as Express.Multer.File;
-		if (!file) {
-			res.status(400).json({ message: "No file uploaded" });
-			return;
-		}
-
-		imageURL = await new Promise<string>((resolve, reject) => {
-			cloudinary.uploader
-				.upload_stream({ upload_preset: "art-gallery" }, (error, result) => {
-					if (result) resolve(result.url);
-					else reject(error);
-				})
-				.end(file.buffer);
-		}).catch((error) => {
-			res.status(500).json({ message: "Image upload failed", error });
-			return "";
-		});
-
-		if (!imageURL) return;
-	}
-
-	if (!email || !username || !password) {
-		res.status(400).json({ message: "Please enter all fields" });
+	} catch (error) {
+		res.status(500).json({ message: "Image upload failed", error });
 		return;
 	}
 
+	// Check if user already exists
 	try {
 		const existingUser = await User.findOne({ email });
 		if (existingUser) {
+			console.log("hhhhheeee");
 			res.status(400).json({ message: "User already exists" });
 			return;
 		}
-		console.log(imageURL);
-		const hashedPassword = await bcrypt.hash(password, 10);
+
+		// Hash password
+		const salt = await bcrypt.genSalt(10);
+		const hashedPassword = await bcrypt.hash(password, salt);
+
+		// Create new user
 		const newUser = new User({
 			email,
 			username,
@@ -79,14 +91,20 @@ export const register = async (req: Request, res: Response) => {
 			image: imageURL,
 		});
 
-		console.log("New user:", newUser);
 		await newUser.save();
 
-		res.status(201).json({ message: "User registered successfully" });
-		return;
+		// Respond with success
+		res.status(201).json({
+			message: "User registered successfully",
+			user: {
+				id: newUser._id,
+				email: newUser.email,
+				username: newUser.username,
+				image: newUser.image,
+			},
+		});
 	} catch (error) {
 		res.status(500).json({ message: "An error occurred", error });
-		return;
 	}
 };
 
@@ -102,12 +120,16 @@ export const login = async (req: Request, res: Response) => {
 	try {
 		const user = await User.findOne({ email });
 		if (!user) {
+			console.log("User not found");
 			res.status(400).json({ message: "User does not exist" });
 			return;
 		}
 
+		console.log("User from database:", user);
+
 		const isMatch = await bcrypt.compare(password, user.password);
 		if (!isMatch) {
+			console.log("Password does not match");
 			res.status(400).json({ message: "Invalid credentials" });
 			return;
 		}
@@ -145,6 +167,7 @@ export const login = async (req: Request, res: Response) => {
 		});
 		return;
 	} catch (error) {
+		console.error("Error during login:", error);
 		res.status(500).json({ message: `An error occurred, ${error}` });
 		return;
 	}
@@ -245,7 +268,7 @@ export const deleteUser = async (req: Request, res: Response) => {
 
 export const logout = async (req: Request, res: Response) => {
 	try {
-		console.log(req.body, "nice")
+		console.log(req.body, "nice");
 		res.clearCookie("refreshToken", { httpOnly: true });
 		res.clearCookie("accessToken", { httpOnly: true });
 		res.status(200).json({ message: "Logged out successfully" });

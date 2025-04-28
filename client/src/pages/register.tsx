@@ -56,7 +56,7 @@ const Register: React.FC = () => {
           encType="multipart/form-data"
         >
           <label htmlFor="username">Username</label>
-          <input
+          <input className="border border-gray-400 rounded-md p-2 mt-1"
             id="username"
             type="text"
             value={data.username}
@@ -65,7 +65,7 @@ const Register: React.FC = () => {
           />
 
           <label htmlFor="email">Email</label>
-          <input
+          <input className="border border-gray-400 rounded-md p-2 mt-1"
             id="email"
             type="email"
             value={data.email}
@@ -74,7 +74,7 @@ const Register: React.FC = () => {
           />
 
           <label htmlFor="password">Password</label>
-          <input
+          <input className="border border-gray-400 rounded-md p-2 mt-1"
             id="password"
             type="password"
             value={data.password}

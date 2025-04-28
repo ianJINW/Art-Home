@@ -17,11 +17,6 @@ const Home: React.FC = () => {
 				<p className="text-gray-600">Welcome, Guest! Please log in to access more features.</p>
 			)}
 			<div className="max-w-5xl mx-auto p-4">
-				{/* Header */}
-				<div className="flex items-center mb-8">
-					<h1 className="text-2xl font-bold">Art-Home</h1>
-					<p className="ml-4 text-gray-600">{user ? `Welcome ${user.username}` : "Welcome, Guest!"}</p>
-				</div>
 
 				{/* Gallery Grid */}
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

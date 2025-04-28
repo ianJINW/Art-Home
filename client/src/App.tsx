@@ -6,17 +6,19 @@ import Login, { Logout } from "./pages/login";
 import Register from "./pages/register";
 import Gallery from "./pages/gallery";
 import Chats from "./pages/chats";
+import CreateChat from "./pages/createChat";
 
 function App() {
 
 	return (
-		<main className="flex flex-col m-1 p-1 text-black ">
+		<main className="flex flex-col w-screen m-0 p-0 h-screen overflow-auto text-black dark:text-white bg-gray-100 dark:bg-gray-900 ">
 			<Router>
 				<Navbar />
 
 				<Routes>
 					<Route path="/" element={<Home />} />
 					<Route path="/gallery" element={<Gallery />} />
+					<Route path="/create-chat" element={<CreateChat />} />
 					<Route path="/login" element={<Login />} />
 					<Route path="/register" element={<Register />} />
 					<Route path="/chat" element={<Chats />} />

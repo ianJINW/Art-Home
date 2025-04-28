@@ -41,7 +41,7 @@ const Login: React.FC = () => {
         </legend>
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col m-1 p-1 text-black radius-100 border-gray-600"
+          className="flex flex-col m-1 p-1 text-black radius-100 border-gray-600 gap-2"
         >
           <label className="flex items-center gap-2">
             <Mail size={20} />

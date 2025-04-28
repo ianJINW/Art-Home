@@ -2,6 +2,7 @@ import { Types } from "mongoose";
 import ChatRoom, { IMessage } from "../models/chatModel";
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import Artist from "../models/artistModels";
 
 // Create a new chat room
 export const createChatRoom = async (req: Request, res: Response) => {
@@ -9,6 +10,19 @@ export const createChatRoom = async (req: Request, res: Response) => {
 		const { participants, roomName } = req.body;
 		if (!participants || !Array.isArray(participants)) {
 			res.status(400).json({ error: "Invalid participants array" });
+			return;
+		}
+
+		const validArtists = await Artist.find({
+			_id: { $in: participants.map((id: string) => new Types.ObjectId(id)) },
+		});
+		if (validArtists.length !== participants.length) {
+			res.status(400).json({ error: "Invalid artist IDs" });
+			return;
+		}
+		const token = req.cookies.accessToken;
+		if (!token) {
+			res.status(401).json({ error: "Unauthorized: Token is missing" });
 			return;
 		}
 

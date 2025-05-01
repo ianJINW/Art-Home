@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { GetData } from "@/utils/api";
 import api from "@/utils/axios";
+import { UserIcon } from "lucide-react";
 
 interface Artist {
   _id: string;
@@ -31,7 +32,7 @@ const CreateChat: React.FC = () => {
       });
 
       console.log("Chat room created:", response.data.chatRoom);
-      navigate("/chats"); // Redirect to the chats page
+      navigate("/chat");
     } catch (error) {
       console.error("Error creating chat room:", error);
       setFormError("Failed to create chat room. Please try again.");
@@ -45,8 +46,8 @@ const CreateChat: React.FC = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white shadow-md rounded-lg">
-      <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">Create a New Chat Room</h1>
+    <div className="flex justify-center flex-col items-center w-auto bg-gray-100 dark:bg-gray-900 border border-gray-300 rounded-sm shadow-sm m-2 p-2">
+      <h3 className="font-bold text-center mb-6 text-beige dark: ">Create a New Chat Room</h3>
       <form onSubmit={handleCreateChat} className="space-y-6">
         {/* Participants Dropdown */}
         <div>
@@ -64,19 +65,19 @@ const CreateChat: React.FC = () => {
               onChange={handleParticipantChange}
               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              {Array.isArray(artists) &&
-                artists.map((artist) => (
-                  <option key={artist._id} value={artist._id}>
-                    {artist.name} - {artist.bio} {/* Display artist name and bio */}
-                  </option>
-                ))}
-            </select>
-          )}
+              {Array.isArray(artists.data) && artists.data.map((artist) => (
+                <option key={artist._id} value={artist._id} className="text-black dark:text-black flex items-center gap-2">
+                  <UserIcon size={20} className="text-black dark:text-black" />
+                  {artist.name} {/* Display artist name */}
+                </option>
+              ))}
+            </select>)
+          }
         </div>
 
         {/* Room Name Input */}
         <div>
-          <label className="block text-lg font-medium text-gray-700 mb-2">Room Name (optional)</label>
+          <label className="block text-lg font-medium text-gray-700 mb-2 text-black dark:text-black ">Room Name (optional)</label>
           <input
             type="text"
             value={roomName}

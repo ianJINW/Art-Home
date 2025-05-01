@@ -9,6 +9,7 @@ export const createChatRoom = async (req: Request, res: Response) => {
 	try {
 		const { participants, roomName } = req.body;
 		if (!participants || !Array.isArray(participants)) {
+			console.log("ni kubad chatcotroller line 12");
 			res.status(400).json({ error: "Invalid participants array" });
 			return;
 		}
@@ -16,6 +17,7 @@ export const createChatRoom = async (req: Request, res: Response) => {
 		const validArtists = await Artist.find({
 			_id: { $in: participants.map((id: string) => new Types.ObjectId(id)) },
 		});
+
 		if (validArtists.length !== participants.length) {
 			res.status(400).json({ error: "Invalid artist IDs" });
 			return;
@@ -33,6 +35,7 @@ export const createChatRoom = async (req: Request, res: Response) => {
 			messages: [],
 		});
 		await chatRoom.save();
+		console.info("Chat room created:", chatRoom);
 		res.status(201).json({ chatRoom });
 	} catch (error) {
 		console.error("Error creating chat room:", error);

@@ -1,5 +1,6 @@
 import React, { useState, ChangeEvent } from "react";
 import { RegisterUser } from "../utils/api";
+import { Eye, EyeClosed, Mail, UserPlus, Lock } from "lucide-react";
 
 interface RegisterFormData {
   username: string;
@@ -16,9 +17,12 @@ const Register: React.FC = () => {
     username: '',
     image: null
   });
-
-
+  const [showPassword, setShowPassword] = useState(false);
   const { mutate, isPending, isError, error } = RegisterUser();
+
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
 
   // Handler for form submission: create a FormData object
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -45,56 +49,94 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div>
-      <fieldset className="border-dotted border-4 border-light-blue-500 rounded-lg">
-        <legend>
-          <h1>Register</h1>
+    <div className="flex justify-center items-center min-h-screen bg-gray-100 dark:bg-gray-900">
+      <fieldset className="w-full max-w-md border border-gray-300 rounded-lg p-6 bg-white dark:bg-gray-800 shadow-lg">
+        <legend className="text-2xl font-bold text-center mb-4 text-gray-800 dark:text-gray-200">
+          Register
         </legend>
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col m-1 p-1 text-black rounded-lg border-gray-600"
+          className="flex flex-col gap-4"
           encType="multipart/form-data"
         >
-          <label htmlFor="username">Username</label>
-          <input className="border border-gray-400 rounded-md p-2 mt-1"
-            id="username"
-            type="text"
-            value={data.username}
-            onChange={(e) => setData({ ...data, username: e.target.value })}
-            required
-          />
+          <div>
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <UserPlus size={20} className="inline-block mr-2" />
+              Username
+            </label>
+            <input placeholder="Please input Username"
+              className="mt-1 block w-full border border-gray-300 rounded-md p-2 text-gray-900 dark:text-gray-100 dark:bg-gray-700 focus:ring-blue-500 focus:border-blue-500"
+              id="username"
+              type="text"
+              value={data.username}
+              onChange={(e) => setData({ ...data, username: e.target.value })}
+              required
+            />
+          </div>
 
-          <label htmlFor="email">Email</label>
-          <input className="border border-gray-400 rounded-md p-2 mt-1"
-            id="email"
-            type="email"
-            value={data.email}
-            onChange={(e) => setData({ ...data, email: e.target.value })}
-            required
-          />
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <Mail size={20} className="inline-block mr-2" />
 
-          <label htmlFor="password">Password</label>
-          <input className="border border-gray-400 rounded-md p-2 mt-1"
-            id="password"
-            type="password"
-            value={data.password}
-            onChange={(e) => setData({ ...data, password: e.target.value })}
-            required
-          />
+              Email
+            </label>
+            <input placeholder="Please input Email"
+              className="mt-1 block w-full border border-gray-300 rounded-md p-2 text-gray-900 dark:text-gray-100 dark:bg-gray-700 focus:ring-blue-500 focus:border-blue-500"
+              id="email"
+              type="email"
+              value={data.email}
+              onChange={(e) => setData({ ...data, email: e.target.value })}
+              required
+            />
+          </div>
 
-          <label htmlFor="image">Profile Image</label>
-          <input
-            id="image"
-            name="profile"
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-          />
+          <label className="flex items-center gap-2 mt-4">
+            <Lock size={20} />
+            Password
+          </label>
+          <div className="relative">
+            <input placeholder="Please input your password"
+              type={showPassword ? "text" : "password"}
+              className="border border-gray-400 rounded-md p-2 mt-1 w-full font-small"
+              onChange={(e) => setData({ ...data, password: e.target.value })}
+            />
+            {showPassword === false ?
+              <span className="absolute right-2 top-3 text-gray-600">
+                <Eye size={20} onClick={togglePasswordVisibility}
+                />
+              </span>
+              : <span className="absolute right-2 top-3 text-gray-600">
+                <EyeClosed size={20} onClick={togglePasswordVisibility}
+                />
+              </span>}
+          </div>
 
-          <button className="cursor-pointer" type="submit" disabled={isPending}>
+          <div>
+            <label htmlFor="image" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Profile Image
+            </label>
+            <input
+              id="image"
+              name="profile"
+              type="file"
+              accept="image/*"
+              className="mt-1 block w-full text-gray-900 dark:text-gray-100 dark:bg-gray-700 focus:ring-blue-500 focus:border-blue-500"
+              onChange={handleFileChange}
+            />
+          </div>
+
+          <button
+            className="w-full bg-blue-500 text-white rounded-md p-2 mt-4 hover:bg-blue-600 focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-gray-100 dark:focus:ring-offset-gray-900 disabled:opacity-50"
+            type="submit"
+            disabled={isPending}
+          >
             {isPending ? 'Registering ...' : 'Register'}
           </button>
-          {isError && <p>Error: {error?.message || 'An error occurred'}</p>}
+          {isError && (
+            <p className="text-red-500 text-sm mt-2">
+              Error: {error?.message || 'An error occurred'}
+            </p>
+          )}
         </form>
       </fieldset>
     </div>
@@ -102,4 +144,3 @@ const Register: React.FC = () => {
 };
 
 export default Register;
-

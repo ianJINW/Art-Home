@@ -2,13 +2,18 @@ import React, { useEffect, useState } from "react";
 import { LoginUser, LogoutUser } from "../utils/api";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../stores/auth.store";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, Eye, EyeClosed } from "lucide-react";
 
 const Login: React.FC = () => {
   const [data, setData] = useState({ email: "", password: "" });
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => !!state.accessToken);
   const { mutate, isPending, isError, error } = LoginUser();
+  const [showPassword, setShowPassword] = useState(false);
+
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -34,8 +39,8 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div>
-      <fieldset className="border-dotted border-4 border-blue-500 rounded-xl">
+    <div className="flex justify-center items-center min-h-screen bg-gray-100 dark:bg-gray-900">
+      <fieldset className="w-full max-w-md border border-gray-300 rounded-lg p-6 bg-white dark:bg-gray-800 shadow-lg">
         <legend>
           <h1>Login</h1>
         </legend>
@@ -47,7 +52,7 @@ const Login: React.FC = () => {
             <Mail size={20} />
             Email
           </label>
-          <input
+          <input placeholder="Please input your email"
             type="email"
             className="border border-gray-400 rounded-md p-2 mt-1"
             onChange={(e) => setData({ ...data, email: e.target.value })}
@@ -57,11 +62,23 @@ const Login: React.FC = () => {
             <Lock size={20} />
             Password
           </label>
-          <input
-            type="password"
-            className="border border-gray-400 rounded-md p-2 mt-1"
-            onChange={(e) => setData({ ...data, password: e.target.value })}
-          />
+          <div className="relative">
+            <input placeholder="Please input your password"
+              type={showPassword ? "text" : "password"}
+              className="border border-gray-400 rounded-md p-2 mt-1 w-full font-small"
+              onChange={(e) => setData({ ...data, password: e.target.value })}
+            />
+            {showPassword === false ?
+              <span className="absolute right-2 top-3 text-gray-600">
+                <Eye size={20} onClick={togglePasswordVisibility}
+                />
+              </span>
+              : <span className="absolute right-2 top-3 text-gray-600">
+                <EyeClosed size={20} onClick={togglePasswordVisibility}
+                />
+              </span>}
+
+          </div>
 
           <button
             className="cursor-pointer bg-blue-500 text-white rounded-md p-2 mt-4 hover:bg-blue-600"

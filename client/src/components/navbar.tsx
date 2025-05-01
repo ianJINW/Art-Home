@@ -1,7 +1,7 @@
 import React from "react";
 import useAuthStore from "../stores/auth.store";
 import { Link } from "react-router-dom";
-import { Image, MessageCircle, LogOut, LogIn, UserPlus, MoonIcon, SunsetIcon } from "lucide-react";
+import { Image, MessageCircle, LogOut, LogIn, UserPlus, MoonIcon, SunIcon } from "lucide-react";
 
 const Navbar: React.FC = () => {
   const user = useAuthStore((state) => state.user);
@@ -35,7 +35,7 @@ const Navbar: React.FC = () => {
         </Link>
         {isDark ? (
           <button onClick={darkMode}>
-            <SunsetIcon size={20} />
+            <SunIcon size={20} />
           </button>
         ) : (
           <button onClick={darkMode}>
@@ -87,16 +87,16 @@ const Navbar: React.FC = () => {
             <>
               <Link
                 to="/login"
-                className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all"
+                className="flex items-center gap-2 bg-blue-500 text-black px-4 py-2 rounded-lg hover:bg-blue-600 transition-all"
               >
-                <LogIn size={20} />
+                <LogIn size={20} className="text-white" />
                 Login
               </Link>
               <Link
                 to="/register"
-                className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-all"
+                className="flex items-center gap-2 bg-green-500 text-black px-4 py-2 rounded-lg hover:bg-green-600 transition-all"
               >
-                <UserPlus size={20} />
+                <UserPlus size={20} className="text-white" />
                 Register
               </Link>
             </>

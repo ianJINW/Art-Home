@@ -100,35 +100,36 @@ export const getChatHistory = async (req: Request, res: Response) => {
 
 // Find all chat rooms for a user
 export const findUserChatRooms = async (req: Request, res: Response) => {
-	try {
-		const token = req.cookies.accessToken;
-		if (!token) {
-			res.status(401).json({ error: "Unauthorized: Token is missing" });
-			return;
-		}
+    try {
+        const token = req.cookies.accessToken;
+        if (!token) {
+            res.status(401).json({ error: "Unauthorized: Token is missing" });
+            return;
+        }
 
-		const secretKey = process.env.JWT_SECRET as string;
-		let decodedToken;
-		try {
-			decodedToken = jwt.verify(token, secretKey) as { id: string };
-		} catch (err) {
-			res.status(401).json({ error: "Unauthorized: Invalid token" });
-			return;
-		}
+        const secretKey = process.env.JWT_SECRET as string;
+        let decodedToken;
+        try {
+            decodedToken = jwt.verify(token, secretKey) as { id: string };
+        } catch (err) {
+            res.status(401).json({ error: "Unauthorized: Invalid token" });
+            return;
+        }
 
-		const userId = decodedToken.id;
-		if (!userId) {
-			res.status(400).json({ error: "User ID is required" });
-			return;
-		}
+        const userId = decodedToken.id;
+        if (!userId) {
+            res.status(400).json({ error: "User ID is required" });
+            return;
+        }
 
-		const chatRooms = await ChatRoom.find({ participants: userId })
-			.populate("participants", "username email")
-			.sort("-updatedAt");
+        // Convert userId to ObjectId
+        const chatRooms = await ChatRoom.find({ participants: new Types.ObjectId(userId) })
+            .populate("participants", "username email")
+            .sort("-updatedAt");
 
-		res.status(200).json({ chatRooms });
-	} catch (error) {
-		console.error("Error finding user chat rooms:", error);
-		res.status(500).json({ error: "Failed to find user chat rooms" });
-	}
+        res.status(200).json({ chatRooms });
+    } catch (error) {
+        console.error("Error finding user chat rooms:", error);
+        res.status(500).json({ error: "Failed to find user chat rooms" });
+    }
 };

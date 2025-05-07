@@ -4,13 +4,9 @@ import { GetData } from "@/utils/api";
 import api from "@/utils/axios";
 import { UserIcon } from "lucide-react";
 
-interface Artist {
-  _id: string;
-  name: string;
-}
 
 const CreateChat: React.FC = () => {
-  const { data: artists, isPending, isError, error } = GetData<Artist[]>("/artist");
+  const { data: artists, isPending, isError, error } = GetData("/artist");
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
   const [roomName, setRoomName] = useState<string>("");
   const [formError, setFormError] = useState<string | null>(null);
@@ -53,31 +49,30 @@ const CreateChat: React.FC = () => {
         <div>
           <label className="block text-lg font-medium text-gray-700 mb-2">
             Select Participants
-          </label>
+          </label> 
           {isPending ? (
             <p className="text-gray-500">Loading artists...</p>
           ) : isError ? (
             <p className="text-red-500">{error?.message || "Failed to load artists."}</p>
-          ) : (
-            <select
-              multiple
-              value={selectedParticipants}
-              onChange={handleParticipantChange}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {Array.isArray(artists.data) && artists.data.map((artist) => (
-                <option key={artist._id} value={artist._id} className="text-black dark:text-black flex items-center gap-2">
-                  <UserIcon size={20} className="text-black dark:text-black" />
-                  {artist.name} {/* Display artist name */}
+          ) : (<select
+            multiple
+            value={selectedParticipants}
+            onChange={handleParticipantChange}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {Array.isArray(artists.data) &&
+              artists.data.map((artist) => (
+                <option key={artist._id} value={artist._id} className="text-black dark:text-black">
+                  {artist.name} 
                 </option>
               ))}
-            </select>)
+          </select>)
           }
         </div>
 
         {/* Room Name Input */}
         <div>
-          <label className="block text-lg font-medium text-gray-700 mb-2 text-black dark:text-black ">Room Name (optional)</label>
+          <label className="block text-lg font-medium text-gray-700 mb-2 dark:text-black ">Room Name (optional)</label>
           <input
             type="text"
             value={roomName}

@@ -59,7 +59,24 @@ const Navbar: React.FC = () => {
             <MessageCircle size={20} />
             Chat
           </Link>
+
+          <Link
+            to="/artists"
+            className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+          >
+            <UserPlus size={20} />
+            Artists
+          </Link>
+          <Link
+            to="/create-chat"
+            className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+          >
+            <MessageCircle size={20} />
+            Create Chat
+          </Link>
         </nav>
+
+        
 
         {/* User Section */}
         <div className="flex items-center gap-4">

@@ -3,6 +3,7 @@ import ChatRoom, { IMessage } from "../models/chatModel";
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import Artist from "../models/artistModels";
+const JWT_SECRET = process.env.JWT_SECRET as string;
 
 // Create a new chat room
 export const createChatRoom = async (req: Request, res: Response) => {
@@ -23,6 +24,7 @@ export const createChatRoom = async (req: Request, res: Response) => {
 			return;
 		}
 		const token = req.cookies.accessToken;
+		console.log("Token:", token);
 		if (!token) {
 			res.status(401).json({ error: "Unauthorized: Token is missing" });
 			return;
@@ -34,6 +36,7 @@ export const createChatRoom = async (req: Request, res: Response) => {
 			participants,
 			messages: [],
 		});
+
 		await chatRoom.save();
 		console.info("Chat room created:", chatRoom);
 		res.status(201).json({ chatRoom });
@@ -100,36 +103,26 @@ export const getChatHistory = async (req: Request, res: Response) => {
 
 // Find all chat rooms for a user
 export const findUserChatRooms = async (req: Request, res: Response) => {
-    try {
-        const token = req.cookies.accessToken;
-        if (!token) {
-            res.status(401).json({ error: "Unauthorized: Token is missing" });
-            return;
-        }
+	const token = req.cookies.accessToken;
+	if (!token) { res.status(401).json({ error: "Missing token" }); return }
 
-        const secretKey = process.env.JWT_SECRET as string;
-        let decodedToken;
-        try {
-            decodedToken = jwt.verify(token, secretKey) as { id: string };
-        } catch (err) {
-            res.status(401).json({ error: "Unauthorized: Invalid token" });
-            return;
-        }
+	let payload: { id: string };
+	try {
+		payload = jwt.verify(token, JWT_SECRET) as any;
+	} catch {
+		res.status(401).json({ error: "Invalid token" });
+		return
+	}
 
-        const userId = decodedToken.id;
-        if (!userId) {
-            res.status(400).json({ error: "User ID is required" });
-            return;
-        }
+	// Convert to ObjectId
+	const userObjectId = new Types.ObjectId(payload.id);
+	console.log("Querying for participant:", userObjectId);
 
-        // Convert userId to ObjectId
-        const chatRooms = await ChatRoom.find({ participants: new Types.ObjectId(userId) })
-            .populate("participants", "username email")
-            .sort("-updatedAt");
+	const chatRooms = await ChatRoom.find({ participants: userObjectId })
+		.populate("participants", "username email")
+		.sort({ updatedAt: -1 });
 
-        res.status(200).json({ chatRooms });
-    } catch (error) {
-        console.error("Error finding user chat rooms:", error);
-        res.status(500).json({ error: "Failed to find user chat rooms" });
-    }
+	console.log("Chat rooms found:", chatRooms);
+	res.status(200).json({ chatRooms });
+	return
 };

@@ -6,7 +6,7 @@ interface IArtist {
 	art: string;
 	socials: Array<string>;
 }
-
+ 
 const ArtistSchema: Schema = new Schema({
 	name: { type: String, required: true },
 	bio: { type: String, required: true },

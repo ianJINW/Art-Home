@@ -1,6 +1,7 @@
 import validator from "validator";
 import bcrypt from "bcryptjs";
 import { cloudinary } from "../middleware/multer";
+import comparePassword from "../models/userModels";
 import jwt from "jsonwebtoken";
 
 import User from "../models/userModels";
@@ -27,6 +28,7 @@ export const register = async (req: Request, res: Response) => {
 	}
 
 	if (password.length < 8) {
+
 		res
 			.status(400)
 			.json({ message: "Password must be at least 8 characters long" });
@@ -53,6 +55,7 @@ export const register = async (req: Request, res: Response) => {
 					})
 					.end(buffer);
 			});
+			console.log('Fix the imagse upload');
 		} else if (req.file) {
 			const file = req.file as Express.Multer.File;
 
@@ -63,9 +66,11 @@ export const register = async (req: Request, res: Response) => {
 						else reject(error);
 					})
 					.end(file.buffer);
+				console.log("Image uploaded successfully:", imageURL);
 			});
-		}
+		} 
 	} catch (error) {
+		console.error("Error uploading image:", error);
 		res.status(500).json({ message: "Image upload failed", error });
 		return;
 	}
@@ -79,20 +84,16 @@ export const register = async (req: Request, res: Response) => {
 			return;
 		}
 
-		// Hash password
-		const salt = await bcrypt.genSalt(10);
-		const hashedPassword = await bcrypt.hash(password, salt);
-
 		// Create new user
 		const newUser = new User({
 			email,
 			username,
-			password: hashedPassword,
+			password,
 			image: imageURL,
 		});
 
 		await newUser.save();
-
+		console.log("User created successfully:", newUser);
 		// Respond with success
 		res.status(201).json({
 			message: "User registered successfully",
@@ -127,7 +128,8 @@ export const login = async (req: Request, res: Response) => {
 
 		console.log("User from database:", user);
 
-		const isMatch = await bcrypt.compare(password, user.password);
+		const isMatch = await user.comparePassword(password);
+		console.log("Password match:", isMatch);
 		if (!isMatch) {
 			console.log("Password does not match");
 			res.status(400).json({ message: "Invalid credentials" });
@@ -210,7 +212,7 @@ export const getUser = async (req: Request, res: Response) => {
 			res.status(404).json({ message: "User not found" });
 			return;
 		}
-		res.json(user);
+		res.json({user,message: "User found"});
 		return;
 	} catch (error) {
 		res.status(500).json({ message: "An error occurred", error });
@@ -221,7 +223,7 @@ export const getUser = async (req: Request, res: Response) => {
 export const getUsers = async (req: Request, res: Response) => {
 	try {
 		const users = await User.find().select("-password");
-		res.json(users);
+		res.json({users,message: "Users found"});
 		return;
 	} catch (error) {
 		res.status(500).json({ message: "An error occurred", error });

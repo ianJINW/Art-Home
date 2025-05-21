@@ -8,6 +8,7 @@ import Gallery from "./pages/gallery";
 import Chats from "./pages/chats";
 import CreateChat from "./pages/createChat";
 import Artists from "./pages/artists";
+import Chat from "./pages/chat";
 
 function App() {
 
@@ -23,6 +24,7 @@ function App() {
 					<Route path="/login" element={<Login />} />
 					<Route path="/register" element={<Register />} />
 					<Route path="/chat" element={<Chats />} />
+					<Route path="/chat/:id" element={<Chat />} />
 					<Route path="/artists" element={<Artists />} />
 					<Route path="/logout" element={<Logout />} />
 				</Routes>

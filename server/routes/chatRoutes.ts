@@ -1,14 +1,14 @@
 import { Router } from "express";
 import {
-	addMessageToRoom,
-	createChatRoom,
+	sendMessage,
+	newChat,
 	findUserChatRooms,
 	getChatHistory,
 } from "../controllers/chatController";
 
 const chatRouter = Router();
 
-chatRouter.route("/").get(findUserChatRooms).post(createChatRoom);
-chatRouter.route("/:id").get(getChatHistory).post(addMessageToRoom);
+chatRouter.route("/").get(findUserChatRooms).post(newChat);
+chatRouter.route("/:id").get(getChatHistory).post(sendMessage);
 
 export default chatRouter;

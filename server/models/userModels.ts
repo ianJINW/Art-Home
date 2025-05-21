@@ -1,6 +1,5 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcryptjs";
-
 
 export interface IUser extends Document {
 	username: string;
@@ -9,6 +8,10 @@ export interface IUser extends Document {
 	isAdmin: boolean;
 	image: string;
 	refreshTokens: string[];
+	bio: string;
+	isArtist: boolean;
+	blockedUsers: string[];
+	lastLogin: Date;
 	comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -17,15 +20,21 @@ const userSchema = new mongoose.Schema({
 		type: String,
 		required: true,
 		unique: true,
+		trim: true,
 	},
 	email: {
 		type: String,
 		required: true,
 		unique: true,
+		lowercase: true,
 	},
 	password: {
 		type: String,
 		required: true,
+	},
+	isArtist: {
+		type: Boolean,
+		default: false,
 	},
 	isAdmin: {
 		type: Boolean,
@@ -36,7 +45,9 @@ const userSchema = new mongoose.Schema({
 		type: String,
 		default: "",
 	},
-	refreshTokens: { type: Array, default: [] },
+	bio: String,
+	blockedUsers: [{ type: Schema.Types.ObjectId, ref: "User" }],
+	lastLogin: Date,
 });
 
 userSchema.pre("save", async function (next) {
@@ -47,8 +58,15 @@ userSchema.pre("save", async function (next) {
 	next();
 });
 
-userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
-	console.log("Comparing password:", candidatePassword, "with hash:", this.password); // Debugging
+userSchema.methods.comparePassword = async function (
+	candidatePassword: string
+): Promise<boolean> {
+	console.log(
+		"Comparing password:",
+		candidatePassword,
+		"with hash:",
+		this.password
+	); // Debugging
 	return bcrypt.compare(candidatePassword, this.password);
 };
 

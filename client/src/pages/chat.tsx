@@ -11,22 +11,21 @@ interface Message {
 
 const Chat: React.FC = () => {
   const { id: roomId } = useParams<{ id: string }>();
-  interface User {
-    id: string;
-  }
 
-  const user = useAuthStore((state) => {
-    const currentUser = state.user;
-    return currentUser && 'id' in currentUser ? (currentUser as User) : null;
-  });
+
+  const user = useAuthStore((state) => state.user);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState<string>("");
+  const [chatHeader, setChatHeader] = useState<string>('');
 
   // Fetch chat history
   useEffect(() => {
     const fetchChatHistory = async () => {
       try {
         const response = await api.get(`/chat/${roomId}`);
+        console.log("Chat history:", response.data);
+
+        setChatHeader(response.data.roomId);
         setMessages(response.data.messages);
       } catch (error) {
         console.error("Error fetching chat history:", error);
@@ -59,7 +58,7 @@ const Chat: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Chat Room</h1>
+      <h1 className="text-2xl font-bold mb-4"> {chatHeader} </h1>
       <div className="bg-gray-100 p-4 rounded-lg shadow mb-4">
         {messages.map((msg, index) => (
           <div key={index} className="mb-2">

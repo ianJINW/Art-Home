@@ -7,18 +7,32 @@ interface Participant {
   username: string;
 }
 
+interface ChatRoom {
+  _id: string;
+  roomId: string;
+  participants: Participant[];
+}
+
 const Chats: React.FC = () => {
-  const { data, isPending, isError, error } = GetData(`chat`);
+  const { data: chats, isPending, isError, error } = GetData(`/chat`);
+  console.log("Chats data:", chats);
 
+  // Render loading state
   if (isPending) {
-    return <div>Loading chats...</div>;
+    return <div className="text-center text-gray-500">Loading chats...</div>;
   }
 
+  // Render error state
   if (isError) {
-    return <div>Error: {error?.message || "Failed to load chats."}</div>;
+    return (
+      <div className="text-center text-red-500">
+        Error: {error?.message || "Failed to load chats."}
+      </div>
+    );
   }
 
-  if (!data || data.length === 0) {
+  // Render empty state
+  if (!chats || !Array.isArray(chats.chatRooms) || chats.chatRooms.length === 0) {
     return (
       <div className="max-w-4xl mx-auto p-4 text-center">
         <h1 className="text-2xl font-bold mb-4">No Chats Available</h1>
@@ -35,32 +49,33 @@ const Chats: React.FC = () => {
     );
   }
 
+  // Render chat list
   return (
     <div className="max-w-md mx-auto p-4">
-      <Link to="/create-chat" className="flex items-center bg-blue-500 text-black rounded-md shadow hover:shadow-md transition-shadow p-4 mb-4">
-        <h1 className="text-md text-black">New Chat</h1>
-        <MessageCircle size={50} className="text-black " />
+      <Link
+        to="/create-chat"
+        className="flex items-center bg-blue-500 text-black rounded-md shadow hover:shadow-md transition-shadow p-4 mb-4"
+      >
+        <MessageCircle size={20} className="text-black" />
+        <h4 className="text-md text-black">New Chat</h4>
       </Link>
-      {Array.isArray(data) &&
-        <>
-          <h1 className="text-2xl font-bold mb-4">Chats</h1>
-          <ul className="space-y-4">
-            {data.map((chat) => (
-              <li
-                key={chat._id}
-                className="flex items-center gap-4 p-4 bg-gray-100 rounded-lg shadow hover:shadow-lg transition-shadow"
-              >
-                <MessageCircle size={20} />
-                <Link
-                  to={`/chat/${chat.roomId}`}
-                  className="text-blue-500 hover:underline"
-                >
-                  {chat.participants.map((p: Participant) => p.username).join(", ")}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </>}
+
+      <h1 className="text-2xl font-bold mb-4">Chats</h1>
+      <ul className="space-y-4">
+        {chats.chatRooms.map((chat: ChatRoom) => (
+          <li
+            key={chat._id}
+            className="flex items-center gap-4 p-4 bg-gray-100 rounded-lg shadow hover:shadow-lg transition-shadow"
+          >
+            <MessageCircle size={20} />
+            <Link
+              to={`/chat/${chat.roomId}`}
+              className="text-blue-500 hover:underline"
+            >
+              {chat.roomId}            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };

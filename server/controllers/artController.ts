@@ -5,10 +5,17 @@ import { cloudinary } from "../middleware/multer";
 class ArtController {
 	public async getAllArt(req: Request, res: Response): Promise<void> {
 		try {
+			const { page = 1, limit = 20 } = req.query;
+
 			const artPieces = await Art.find()
-				.populate("artist")
-				.sort({ createdAt: -1 });
-			res.status(200).json({ message: "All art pieces", artPieces });
+				.populate("user")
+				.sort({ createdAt: -1 })
+				.skip((Number(page) - 1) * Number(limit))
+				.limit(Number(limit));
+
+			res
+				.status(200)
+				.json({ message: "All art pieces", artPieces, page, limit });
 		} catch (error: any) {
 			console.error("Error fetching art pieces:", error.stack);
 			res
@@ -21,7 +28,7 @@ class ArtController {
 		try {
 			const artId = req.params.id;
 			const artPiece = await Art.findById(artId)
-				.populate("artist")
+				.populate("user")
 				.populate("likes");
 
 			if (!artPiece) {
@@ -42,7 +49,6 @@ class ArtController {
 	public async likeArt(req: Request, res: Response): Promise<void> {
 		const id = req.params.id;
 		const userId = req.body.userId;
-		let likes = [];
 
 		try {
 			let artPiece = await Art.findById(id);
@@ -56,9 +62,7 @@ class ArtController {
 				liked: true,
 				createdAt: new Date(),
 			};
-			likes.push(like);
-
-			artPiece.likes = likes;
+			artPiece.likes.push(like);
 
 			await artPiece.save();
 
@@ -169,8 +173,16 @@ class ArtController {
 		}
 	}
 
-	public async createArt(req: Request, res: Response): Promise<void> {
-		console.log(req.file, req.body);
+	createArt = async (req: Request, res: Response): Promise<void> => {
+		if (!req.user /*|| !req.user.isArtist */) {
+			res.status(403).json({ message: "Only artists can create art" });
+			return;
+		}
+
+		if (!req.file) {
+			res.status(400).json({ message: "Please upload an image" });
+			return;
+		}
 
 		try {
 			const { artist, description, title } = req.body;
@@ -205,7 +217,7 @@ class ArtController {
 				.status(500)
 				.json({ message: "Error creating art piece", error: error.message });
 		}
-	}
+	};
 
 	public async updateArt(req: Request, res: Response): Promise<void> {
 		try {

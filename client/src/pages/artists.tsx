@@ -21,30 +21,31 @@ const Artists: React.FC = () => {
   const [formData, setFormData] = useState({
     name: "",
     bio: "",
-    socials: "",
+    socials: [] as string[], // Updated to handle socials as an array
     user: "",
   });
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Handle input changes for name, bio, and user
   const handleInputChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
+  // Handle socials input as a comma-separated list
+  const handleSocialsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const socialsArray = value.split(",").map((social) => social.trim()); // Convert to array
+    setFormData({ ...formData, socials: socialsArray });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (
-      !formData.name ||
-      !formData.bio ||
-      !formData.socials ||
-      !formData.user
-    ) {
+    if (!formData.name || !formData.bio || formData.socials.length === 0 || !formData.user) {
       setFormError("Please fill in all fields.");
       return;
     }
@@ -56,6 +57,7 @@ const Artists: React.FC = () => {
       window.location.reload();
     } catch (error) {
       setFormError("Failed to create artist. Please try again.");
+      console.error(error)
     } finally {
       setIsSubmitting(false);
     }
@@ -76,9 +78,7 @@ const Artists: React.FC = () => {
         <AlertCircle className="text-red-500" size={40} />
         <p className="ml-4 text-red-500 text-lg">
           Failed to load data. Please try again later.
-          {artistsError && (
-            <span className="block">{artistsError.message}</span>
-          )}
+          {artistsError && <span className="block">{artistsError.message}</span>}
           {usersError && <span className="block">{usersError.message}</span>}
         </p>
       </div>
@@ -105,9 +105,7 @@ const Artists: React.FC = () => {
           )}
         </div>
       ) : (
-        <p className="text-center text-gray-600">
-          No artists found. Create one below!
-        </p>
+        <p className="text-center text-gray-600">No artists found. Create one below!</p>
       )}
 
       {/* Form to create a new artist */}
@@ -115,9 +113,7 @@ const Artists: React.FC = () => {
         <h2 className="text-xl font-bold mb-4">Create a New Artist</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-lg font-medium text-gray-700 mb-2">
-              Name
-            </label>
+            <label className="block text-lg font-medium text-gray-700 mb-2">Name</label>
             <input
               type="text"
               name="name"
@@ -129,9 +125,7 @@ const Artists: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-lg font-medium text-gray-700 mb-2">
-              Bio
-            </label>
+            <label className="block text-lg font-medium text-gray-700 mb-2">Bio</label>
             <textarea
               name="bio"
               value={formData.bio}
@@ -142,23 +136,19 @@ const Artists: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-lg font-medium text-gray-700 mb-2">
-              Socials
-            </label>
+            <label className="block text-lg font-medium text-gray-700 mb-2">Socials</label>
             <input
               type="text"
               name="socials"
-              value={formData.socials}
-              onChange={handleInputChange}
+              value={formData.socials.join(", ")} // Convert array back to a string
+              onChange={handleSocialsChange}
               placeholder="Enter artist socials (comma-separated)"
               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-lg font-medium text-gray-700 mb-2">
-              Assign User
-            </label>
+            <label className="block text-lg font-medium text-gray-700 mb-2">Assign User</label>
             <select
               name="user"
               value={formData.user}

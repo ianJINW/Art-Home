@@ -19,6 +19,7 @@ export const createArtist = async (req: Request, res: Response) => {
 
 	// Validate required fields
 	if (!name || !bio || !socials || !Array.isArray(socials)) {
+		console.log("bad");
 		res.status(400).json({
 			message:
 				"Name, bio, and socials are required, and socials must be an array",
@@ -28,6 +29,7 @@ export const createArtist = async (req: Request, res: Response) => {
 
 	// Validate and convert the user field to ObjectId
 	if (!mongoose.Types.ObjectId.isValid(user)) {
+		console.log("invalid");
 		res.status(400).json({
 			message: "Invalid user ID",
 		});
@@ -44,6 +46,7 @@ export const createArtist = async (req: Request, res: Response) => {
 			user: new mongoose.Types.ObjectId(user),
 		});
 
+		console.log("success");
 		res.status(201).json({
 			message: "Artist created successfully",
 			data: artist,

@@ -28,7 +28,6 @@ export const register = async (req: Request, res: Response) => {
 	}
 
 	if (password.length < 8) {
-
 		res
 			.status(400)
 			.json({ message: "Password must be at least 8 characters long" });
@@ -55,7 +54,7 @@ export const register = async (req: Request, res: Response) => {
 					})
 					.end(buffer);
 			});
-			console.log('Fix the imagse upload');
+			console.log("Fix the imagse upload");
 		} else if (req.file) {
 			const file = req.file as Express.Multer.File;
 
@@ -68,22 +67,14 @@ export const register = async (req: Request, res: Response) => {
 					.end(file.buffer);
 				console.log("Image uploaded successfully:", imageURL);
 			});
-		} 
+		}
 	} catch (error) {
 		console.error("Error uploading image:", error);
 		res.status(500).json({ message: "Image upload failed", error });
 		return;
 	}
 
-	// Check if user already exists
 	try {
-		const existingUser = await User.findOne({ email });
-		if (existingUser) {
-			console.log("hhhhheeee");
-			res.status(400).json({ message: "User already exists" });
-			return;
-		}
-
 		// Create new user
 		const newUser = new User({
 			email,
@@ -126,6 +117,8 @@ export const login = async (req: Request, res: Response) => {
 			return;
 		}
 
+		user.lastLogin = new Date();
+		await user.save();
 		console.log("User from database:", user);
 
 		const isMatch = await user.comparePassword(password);
@@ -212,7 +205,13 @@ export const getUser = async (req: Request, res: Response) => {
 			res.status(404).json({ message: "User not found" });
 			return;
 		}
-		res.json({user,message: "User found"});
+
+		if (user.blockedUsers.includes(req.body.userId)) {
+			res.status(403).json({ message: "User not found" });
+			return;
+		}
+
+		res.json({ user, message: "User found" });
 		return;
 	} catch (error) {
 		res.status(500).json({ message: "An error occurred", error });
@@ -223,7 +222,7 @@ export const getUser = async (req: Request, res: Response) => {
 export const getUsers = async (req: Request, res: Response) => {
 	try {
 		const users = await User.find().select("-password");
-		res.json({users,message: "Users found"});
+		res.json({ users, message: "Users found" });
 		return;
 	} catch (error) {
 		res.status(500).json({ message: "An error occurred", error });

@@ -1,4 +1,5 @@
 import { Schema, model, Document } from "mongoose";
+import User from "./userModels";
 
 export interface IArt extends Document {
 	title: string;
@@ -35,7 +36,7 @@ const commentSchema: Schema = new Schema({
 
 const ArtSchema: Schema = new Schema({
 	title: { type: String, required: true, trim: true, unique: true },
-	artist: { type: Schema.Types.ObjectId, ref: "Artist", required: true },
+	artistId: { type: Schema.Types.ObjectId, ref: "User", required: true },
 	art: { type: String, required: true },
 	description: { type: String, trim: true },
 	likes: [LikeSchema],
@@ -46,7 +47,13 @@ const ArtSchema: Schema = new Schema({
 
 commentSchema.index({ createdAt: -1 });
 ArtSchema.index({ createdAt: -1, updatedAt: -1, author: 1 });
-
+ArtSchema.pre("save", async function (next) {
+	const user = await User.findById(this.artistId);
+	if (!user) {
+		throw new Error("Only artists can post artworks");
+	}
+	next();
+});
 const Art = model<IArt>("Art", ArtSchema);
 
 export default Art;

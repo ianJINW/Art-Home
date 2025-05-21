@@ -6,6 +6,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 export interface formData {
 	username: string;
 	password?: string;
+	id: number;
 	email: string;
 	image?: File | null;
 }

@@ -2,26 +2,8 @@ import mongoose, { Types } from "mongoose";
 import { ChatRoom, IMessage, Message } from "../models/chatModel";
 import { Request, Response } from "express";
 import User from "../models/userModels";
-import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
-
-// Middleware to authenticate user via token
-export const authenticate = (req: Request, res: Response, next: Function) => {
-	const token = req.cookies.accessToken;
-	if (!token) {
-		res.status(401).json({ error: "Missing token" });
-		return;
-	}
-	try {
-		const payload = jwt.verify(token, JWT_SECRET) as { id: string };
-		req.user = { _id: payload.id, blockedUsers: [] }; // Blocked users can be fetched if needed
-		next();
-	} catch (err) {
-		console.error("Token verification failed:", err);
-		res.status(401).json({ error: "Invalid token" });
-	}
-};
 
 // Create or retrieve a chat room
 export const newChat = async (req: Request, res: Response) => {

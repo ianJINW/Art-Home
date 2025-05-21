@@ -1,7 +1,6 @@
 import validator from "validator";
 import bcrypt from "bcryptjs";
 import { cloudinary } from "../middleware/multer";
-import comparePassword from "../models/userModels";
 import jwt from "jsonwebtoken";
 
 import User from "../models/userModels";
@@ -103,8 +102,8 @@ export const register = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
 	console.log("Request body:", req.body);
 
-	const { email, password } = req.body;
-	if (!email || !password) {
+	const { email, password: pass } = req.body;
+	if (!email || !pass) {
 		res.status(400).json({ message: "Please enter all fields" });
 		return;
 	}
@@ -121,7 +120,7 @@ export const login = async (req: Request, res: Response) => {
 		await user.save();
 		console.log("User from database:", user);
 
-		const isMatch = await user.comparePassword(password);
+		const isMatch = await user.comparePassword(pass);
 		console.log("Password match:", isMatch);
 		if (!isMatch) {
 			console.log("Password does not match");
@@ -129,12 +128,7 @@ export const login = async (req: Request, res: Response) => {
 			return;
 		}
 
-		const payload = {
-			id: user.id,
-			email: user.email,
-			username: user.username,
-			isAdmin: user.isAdmin,
-		};
+		const { password, ...payload } = user.toObject();
 		const token = jwt.sign(payload, secretKey, { expiresIn: "1h" });
 		const refreshToken = jwt.sign(payload, secretKey, { expiresIn: "5h" });
 
@@ -152,12 +146,7 @@ export const login = async (req: Request, res: Response) => {
 
 		res.json({
 			message: "Login successful",
-			user: {
-				id: user.id,
-				username: user.username,
-				email: user.email,
-				image: user.image,
-			},
+			user,
 			token,
 		});
 		return;

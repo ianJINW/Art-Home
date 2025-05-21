@@ -55,6 +55,22 @@ const chatRoomSchema: Schema<IChatRoom> = new Schema(
 	{ timestamps: true }
 );
 
+chatRoomSchema.statics.addMessage = async function (
+	roomId: string,
+	message: IMessage
+): Promise<void> {
+	try {
+		const chatRoom = await this.findById(roomId);
+		if (!chatRoom) {
+			throw new Error("Chat room not found");
+		}
+		chatRoom.updatedAt = new Date();
+		await chatRoom.save();
+	} catch (error) {
+		console.error("Error adding message:", error);
+		throw error;
+	}
+};
 // Create Models
 const ChatRoom = mongoose.model<IChatRoom>("ChatRoom", chatRoomSchema);
 const Message = mongoose.model<IMessage>("Message", messageSchema);

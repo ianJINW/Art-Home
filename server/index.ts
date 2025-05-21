@@ -14,6 +14,7 @@ import artRouter from "./routes/artRoutes";
 import chatRouter from "./routes/chatRoutes";
 import artistRouter from "./routes/artistRoutes";
 import { initializeSocket } from "./socket/chat";
+import { authToken } from "./utils/jwt";
 
 const app = express();
 const frontend = process.env.FRONTEND_URL;
@@ -39,6 +40,7 @@ app.use(passport.initialize());
 import "./config/passport";
 
 app.use("/api/v1/user", userRouter);
+app.use(authToken);
 app.use("/api/v1/art", artRouter);
 app.use("/api/v1/chat", chatRouter);
 app.use("/api/v1/artist", artistRouter);

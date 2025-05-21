@@ -12,6 +12,7 @@ export interface IUser extends Document {
 	isArtist: boolean;
 	blockedUsers: string[];
 	lastLogin: Date;
+	_id: string;
 	comparePassword(candidatePassword: string): Promise<boolean>;
 }
 

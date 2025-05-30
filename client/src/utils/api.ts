@@ -84,10 +84,7 @@ export const LoginUser = () => {
 	return useMutation({
 		mutationFn: login,
 		onSuccess: (data) => {
-			logIn(data.token, {
-				...data.user,
-				image: null,
-			});
+			logIn(data.token, data.user);
 			navigate("/");
 			console.log(data.user);
 			console.log(`Logged in successfully`, data.user, data);

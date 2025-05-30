@@ -7,6 +7,7 @@ import helmet from "helmet";
 import passport from "passport";
 import http from "http";
 import cookieParser from "cookie-parser";
+import OpenAI from "openai";
 
 import connectDB from "./config/db";
 import userRouter from "./routes/userRoutes";
@@ -15,6 +16,7 @@ import chatRouter from "./routes/chatRoutes";
 import artistRouter from "./routes/artistRoutes";
 import { initializeSocket } from "./socket/chat";
 import { authToken } from "./utils/jwt";
+import "./config/passport";
 
 const app = express();
 const frontend = process.env.FRONTEND_URL;
@@ -29,6 +31,27 @@ app.use(
 	})
 );
 
+/*
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+	(async () => {
+	const res = await client.chat.completions.create({
+		model: "gpt-3.5-turbo",
+		messages: [
+			{
+				role: "system",
+				content:
+					"You are a helpful assistant that helps users with their queries.",
+			},
+			{
+				role: "user",
+				content: "What is the capital of France?",
+			},
+		],
+	});
+	console.log(res.choices[0].message.content);
+})();*/
+
 connectDB();
 
 app.use(helmet());
@@ -37,7 +60,6 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use(passport.initialize());
-import "./config/passport";
 
 app.use("/api/v1/user", userRouter);
 app.use(authToken);

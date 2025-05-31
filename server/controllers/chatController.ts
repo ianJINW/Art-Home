@@ -8,24 +8,33 @@ const JWT_SECRET = process.env.JWT_SECRET as string;
 // Create or retrieve a chat room
 export const newChat = async (req: Request, res: Response) => {
 	try {
-		const { otherUserId } = req.params;
+		// 1. Extract the target user ID from the request body
+		const { chatee } = req.body;
+
+		// 2. Ensure the request is authenticated
 		if (!req.user) {
 			res.status(401).json({ error: "Unauthorized: User not authenticated" });
 			return;
 		}
-		const me = req.user._id;
+		const me = req.user._id; // our own user ID
 
-		const other = await User.findById(otherUserId);
+		// 3. Look up the “other” user by ID
+		const other = await User.findById(chatee);
 		if (!other) {
 			res.status(404).json({ error: "User not found" });
 			return;
 		}
 
+		// 4. Prevent chatting with yourself
 		if (other._id.toString() === me.toString()) {
 			res.status(400).json({ error: "You cannot chat with yourself" });
 			return;
 		}
 
+		console.log("I have blocked:", req.user.blockedUsers, me);
+		console.log("They have blocked me:", other.blockedUsers, other);
+
+		// 5. Respect blocking: if either has blocked the other, forbid chat
 		if (
 			other.blockedUsers.includes(me) ||
 			req.user.blockedUsers.includes(other._id.toString())
@@ -34,14 +43,32 @@ export const newChat = async (req: Request, res: Response) => {
 			return;
 		}
 
-		const chat = await ChatRoom.findOneAndUpdate(
-			{ participants: { $all: [me, otherUserId] } },
-			{ $set: { participants: [me, otherUserId] } },
-			{ upsert: true, new: true }
-		);
+		const chat = await ChatRoom.findOne({
+			participants: { $all: [me, chatee] },
+		});
 
+		if (!chat) {
+			// 6. If no chat room exists, create a new one
+			const newChatRoom = new ChatRoom({
+				participants: [me, chatee],
+				roomId: new mongoose.Types.ObjectId(),
+			});
+			await newChatRoom.save();
+			res.status(201).json({ chat: newChatRoom });
+			return;
+		}
+
+		if (!chat.participants || chat.participants.length === 0) {
+			chat.participants = [me, chatee];
+			await chat.save();
+		}
+
+		// 8. Return the chat room and the other user’s public profile
 		res.json({
-			chat,
+			chat: {
+				_id: chat._id,
+				participants: chat.participants,
+			},
 			otherUser: {
 				_id: other._id,
 				username: other.username,
@@ -121,30 +148,6 @@ export const getMessages = async (req: Request, res: Response) => {
 	} catch (error) {
 		console.error("Error fetching messages:", error);
 		res.status(500).json({ error: "Failed to fetch messages" });
-	}
-};
-
-// Get chat history for a specific room
-export const getChatHistory = async (req: Request, res: Response) => {
-	try {
-		const { chatId } = req.params;
-		if (!req.user) {
-			res.status(401).json({ error: "Unauthorized: User not authenticated" });
-			return;
-		}
-		if (!chatId) {
-			res.status(400).json({ error: "Chat ID is required" });
-			return;
-		}
-
-		const messages = await Message.find({ chatRoom: chatId })
-			.populate("sender", "username email")
-			.sort({ timestamp: -1 });
-
-		res.status(200).json({ messages });
-	} catch (error) {
-		console.error("Error fetching chat history:", error);
-		res.status(500).json({ error: "Failed to fetch chat history" });
 	}
 };
 

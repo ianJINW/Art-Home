@@ -2,6 +2,7 @@ import axios from "axios";
 import { apiUrl } from "./url";
 const backend = import.meta.env.VITE_API_BACKEND_URL as string;
 
+axios.defaults.withCredentials = true;
 const api = axios.create({
 	baseURL: apiUrl(backend, ""),
 	withCredentials: true,

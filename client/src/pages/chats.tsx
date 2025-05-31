@@ -9,13 +9,12 @@ interface Participant {
 
 interface ChatRoom {
   _id: string;
-  roomId: string;
+  chatId: string;
   participants: Participant[];
 }
 
 const Chats: React.FC = () => {
   const { data: chats, isPending, isError, error } = GetData(`/chat`);
-  console.log("Chats data:", chats);
 
   // Render loading state
   if (isPending) {
@@ -69,10 +68,10 @@ const Chats: React.FC = () => {
           >
             <MessageCircle size={20} />
             <Link
-              to={`/chat/${chat.roomId}`}
+              to={`/chat/${chat.chatId}`}
               className="text-blue-500 hover:underline"
             >
-              {chat.roomId}            </Link>
+              {chat.chatId}            </Link>
           </li>
         ))}
       </ul>

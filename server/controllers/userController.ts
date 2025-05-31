@@ -20,12 +20,6 @@ export const register = async (req: Request, res: Response) => {
 		return;
 	}
 
-	if (!validator.isEmail(email)) {
-		res.status(400).json({ message: "Invalid email format" });
-		console.log("hapsa");
-		return;
-	}
-
 	if (password.length < 8) {
 		res
 			.status(400)
@@ -146,7 +140,12 @@ export const login = async (req: Request, res: Response) => {
 
 		res.json({
 			message: "Login successful",
-			user,
+			user: {
+				id: user._id,
+				email: user.email,
+				username: user.username,
+				image: user.image,
+			},
 			token,
 		});
 		return;

@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import http from "http";
 import { ChatRoom, Message } from "../models/chatModel";
+import cookie from "cookie";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 
@@ -15,11 +16,15 @@ export const initializeSocket = (server: http.Server) => {
 
 	io.use(async (socket, next) => {
 		try {
-			const token = socket.handshake.auth.token;
-			if (!token) {
-				throw new Error("Token is required");
+			const header = socket.request.headers.cookie;
+			if (!header) {
+				throw new Error("Cookie missing!!");
 			}
-			const decoded = jwt.verify(token, process.env.JWT_SECRET!);
+
+			const { accessToken } = cookie.parse(header);
+			if (!accessToken) throw new Error("Ne cookies");
+
+			const decoded = jwt.verify(accessToken, process.env.JWT_SECRET!);
 			socket.data.user = decoded;
 			next();
 		} catch (err: any) {
@@ -29,7 +34,8 @@ export const initializeSocket = (server: http.Server) => {
 	});
 
 	io.on("connection", (socket) => {
-		console.log("Connected to socket");
+		const user = socket.data.user;
+		console.log(`%{user.username} Connected to socket`);
 
 		socket.on("joinRoom", async (roomId: string) => {
 			if (!roomId) {

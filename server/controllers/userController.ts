@@ -1,22 +1,23 @@
-import validator from "validator";
-import bcrypt from "bcryptjs";
 import { cloudinary } from "../middleware/multer";
 import jwt from "jsonwebtoken";
 
 import User from "../models/userModels";
 import { Request, Response } from "express";
+import mongoose from "mongoose";
+import transactione from "../utils/transactions";
 
 const secretKey = process.env.JWT_SECRET as string;
 
-export const register = async (req: Request, res: Response) => {
-	console.log("Request body:", req.body);
-
+const registerUser = async (
+	session: mongoose.ClientSession,
+	req: Request,
+	res: Response
+) => {
 	const { email, username, password } = req.body;
 
 	// Validate input
 	if (!email || !username || !password) {
 		res.status(400).json({ message: "Please enter all fields" });
-		console.log("hello");
 		return;
 	}
 
@@ -24,7 +25,6 @@ export const register = async (req: Request, res: Response) => {
 		res
 			.status(400)
 			.json({ message: "Password must be at least 8 characters long" });
-		console.log("again with the passwords");
 		return;
 	}
 
@@ -47,7 +47,6 @@ export const register = async (req: Request, res: Response) => {
 					})
 					.end(buffer);
 			});
-			console.log("Fix the imagse upload");
 		} else if (req.file) {
 			const file = req.file as Express.Multer.File;
 
@@ -58,11 +57,9 @@ export const register = async (req: Request, res: Response) => {
 						else reject(error);
 					})
 					.end(file.buffer);
-				console.log("Image uploaded successfully:", imageURL);
 			});
 		}
 	} catch (error) {
-		console.error("Error uploading image:", error);
 		res.status(500).json({ message: "Image upload failed", error });
 		return;
 	}
@@ -76,9 +73,8 @@ export const register = async (req: Request, res: Response) => {
 			image: imageURL,
 		});
 
-		await newUser.save();
-		console.log("User created successfully:", newUser);
-		// Respond with success
+		await newUser.save({ session });
+
 		res.status(201).json({
 			message: "User registered successfully",
 			user: {
@@ -93,9 +89,11 @@ export const register = async (req: Request, res: Response) => {
 	}
 };
 
-export const login = async (req: Request, res: Response) => {
-	console.log("Request body:", req.body);
-
+export const loginUser = async (
+	session: mongoose.ClientSession,
+	req: Request,
+	res: Response
+) => {
 	const { email, password: pass } = req.body;
 	if (!email || !pass) {
 		res.status(400).json({ message: "Please enter all fields" });
@@ -105,19 +103,12 @@ export const login = async (req: Request, res: Response) => {
 	try {
 		const user = await User.findOne({ email });
 		if (!user) {
-			console.log("User not found");
 			res.status(400).json({ message: "User does not exist" });
 			return;
 		}
 
-		user.lastLogin = new Date();
-		await user.save();
-		console.log("User from database:", user);
-
 		const isMatch = await user.comparePassword(pass);
-		console.log("Password match:", isMatch);
 		if (!isMatch) {
-			console.log("Password does not match");
 			res.status(400).json({ message: "Invalid credentials" });
 			return;
 		}
@@ -130,13 +121,18 @@ export const login = async (req: Request, res: Response) => {
 			httpOnly: true,
 			secure: process.env.NODE_ENV === "production",
 			sameSite: "strict",
+			maxAge: 3600000,
 		});
 
 		res.cookie("refreshToken", refreshToken, {
 			httpOnly: true,
 			secure: process.env.NODE_ENV === "production",
 			sameSite: "strict",
+			maxAge: 3600000,
 		});
+
+		user.lastLogin = new Date();
+		await user.save({ session });
 
 		res.json({
 			message: "Login successful",
@@ -150,7 +146,6 @@ export const login = async (req: Request, res: Response) => {
 		});
 		return;
 	} catch (error) {
-		console.error("Error during login:", error);
 		res.status(500).json({ message: `An error occurred, ${error}` });
 		return;
 	}
@@ -180,13 +175,24 @@ export const refreshToken = async (req: Request, res: Response) => {
 			secretKey,
 			{ expiresIn: "1h" }
 		);
+
+		res.cookie(`refreshCookie`, newToken, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === "production",
+			sameSite: "strict",
+			maxAge: 3600000, // 1 hour
+		});
 	} catch (error) {
 		res.status(401).json({ message: "Invalid refresh token" });
 		return;
 	}
 };
 
-export const getUser = async (req: Request, res: Response) => {
+export const getUserFn = async (
+	session: mongoose.ClientSession,
+	req: Request,
+	res: Response
+) => {
 	try {
 		const user = await User.findById(req.params.id).select("-password");
 		if (!user) {
@@ -207,7 +213,11 @@ export const getUser = async (req: Request, res: Response) => {
 	}
 };
 
-export const getUsers = async (req: Request, res: Response) => {
+export const getUsersFn = async (
+	session: mongoose.ClientSession,
+	req: Request,
+	res: Response
+) => {
 	try {
 		const users = await User.find().select("-password");
 		res.json({ users, message: "Users found" });
@@ -218,7 +228,11 @@ export const getUsers = async (req: Request, res: Response) => {
 	}
 };
 
-export const updateUser = async (req: Request, res: Response) => {
+export const update = async (
+	session: mongoose.ClientSession,
+	req: Request,
+	res: Response
+) => {
 	try {
 		const user = await User.findById(req.params.id);
 		if (!user) {
@@ -229,7 +243,7 @@ export const updateUser = async (req: Request, res: Response) => {
 		user.username = req.body.username || user.username;
 		user.email = req.body.email || user.email;
 		user.isAdmin = req.body.isAdmin || user.isAdmin;
-		await user.save();
+		await user.save({ session });
 
 		res.json({ message: "User updated" });
 		return;
@@ -239,9 +253,13 @@ export const updateUser = async (req: Request, res: Response) => {
 	}
 };
 
-export const deleteUser = async (req: Request, res: Response) => {
+export const deleter = async (
+	session: mongoose.ClientSession,
+	req: Request,
+	res: Response
+) => {
 	try {
-		const user = await User.findByIdAndDelete(req.params.id);
+		const user = await User.findByIdAndDelete(req.params.id, { session });
 		if (!user) {
 			res.status(404).json({ message: "User not found" });
 			return;
@@ -257,12 +275,17 @@ export const deleteUser = async (req: Request, res: Response) => {
 
 export const logout = async (req: Request, res: Response) => {
 	try {
-		console.log(req.body, "nice");
 		res.clearCookie("refreshToken", { httpOnly: true });
 		res.clearCookie("accessToken", { httpOnly: true });
 		res.status(200).json({ message: "Logged out successfully" });
 	} catch (error) {
-		console.error("Error during logout:", error);
 		res.status(500).json({ message: "Failed to log out", error });
 	}
 };
+
+export const register = transactione(registerUser);
+export const login = transactione(loginUser);
+export const getUser = transactione(getUserFn);
+export const getUsers = transactione(getUsersFn);
+export const updateUser = transactione(update);
+export const deleteUser = transactione(deleter);

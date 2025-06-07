@@ -1,4 +1,4 @@
-interface AuthenticatedUser {
+export interface AuthenticatedUser {
 	_id: string;
 	username: string;
 	email: string;
@@ -11,56 +11,48 @@ import mongoose, { Types } from "mongoose";
 import { ChatRoom, IMessage, Message } from "../models/chatModel";
 import { Request, Response } from "express";
 import User from "../models/userModels";
+import transactione from "../utils/transactions";
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
 
 // Create or retrieve a chat room
-export const newChat = async (
-	req: Request & { user?: AuthenticatedUser },
+const newChatFn = async (
+	session: mongoose.ClientSession,
+	req: Request,
 	res: Response
 ) => {
 	try {
-		// 1. Extract the target user ID from the request body
 		const { chatee } = req.body;
 
-		// 2. Ensure the request is authenticated
 		if (!req.user) {
 			res.status(401).json({ error: "Unauthorized: User not authenticated" });
 			return;
 		}
-		const me = req.user._id;
+		const me = (req.user as any)._id;
 
-		// 3. Look up the “other” user by ID
 		const other = await User.findById(chatee);
 		if (!other) {
 			res.status(404).json({ error: "User not found" });
 			return;
 		}
 
-		// 4. Prevent chatting with yourself
 		if (other._id.toString() === me.toString()) {
 			res.status(400).json({ error: "You cannot chat with yourself" });
 			return;
 		}
 
-		console.log("I have blocked:", req.user.blockedUsers, me);
-		console.log("They have blocked me:", other.blockedUsers, other);
-
-		// 5. Respect blocking: if either has blocked the other, forbid chat
 		if (
 			other.blockedUsers.includes(me) ||
-			req.user.blockedUsers.includes(other._id.toString())
+			((req.user as any).blockedUsers || []).includes(other._id.toString())
 		) {
 			res.status(403).json({ error: "Error. Cannot chat with this user" });
 			return;
 		}
-
 		const chat = await ChatRoom.findOne({
 			participants: { $all: [me, chatee] },
 		});
 
 		if (!chat) {
-			// 6. If no chat room exists, create a new one
 			const newChatRoom = new ChatRoom({
 				participants: [me, chatee],
 				roomId: new mongoose.Types.ObjectId(),
@@ -72,10 +64,8 @@ export const newChat = async (
 
 		if (!chat.participants || chat.participants.length === 0) {
 			chat.participants = [me, chatee];
-			await chat.save();
+			await chat.save({ session });
 		}
-
-		// 8. Return the chat room and the other user’s public profile
 		res.json({
 			chat: {
 				_id: chat._id,
@@ -90,24 +80,25 @@ export const newChat = async (
 			},
 		});
 	} catch (error) {
-		console.error("Error in newChat:", error);
 		res.status(500).json({ error: "Failed to create new chat" });
 	}
 };
 
-// Send a message in a chat room
-export const sendMessage = async (
-	req: Request & { user?: AuthenticatedUser },
+const sendMessageFn = async (
+	session: mongoose.ClientSession,
+	req: Request,
 	res: Response
 ) => {
+	console.log("Sending message", req.body);
 	try {
 		if (!req.user) {
 			res.status(401).json({ error: "Unauthorized: User not authenticated" });
 			return;
 		}
-		const { chatId } = req.params;
+
+		const chatId = String(req.params.id);
 		const { message } = req.body;
-		const senderId = req.user._id;
+		const senderId = (req.user as any)._id;
 
 		if (!chatId || !message) {
 			res.status(400).json({ error: "Missing required fields" });
@@ -134,21 +125,26 @@ export const sendMessage = async (
 			timestamp: new Date(),
 		}) as IMessage;
 
-		await newMessage.save();
-		res.status(201).json({ message: newMessage });
+		await newMessage.save({ session });
+
+		const messages = await Message.find({ chatRoom: chatId })
+			.populate("sender", "username email")
+			.sort({ timestamp: 1 })
+			.session(session);
+
+		res.status(201).json({ message: newMessage, messages });
 	} catch (error) {
-		console.error("Error in sendMessage:", error);
 		res.status(500).json({ error: "Failed to send message" });
 	}
 };
 
-// Retrieve messages from a chat room
-export const getMessages = async (
-	req: Request & { user?: AuthenticatedUser },
+const getMessagesFn = async (
+	session: mongoose.ClientSession,
+	req: Request,
 	res: Response
 ) => {
 	try {
-		const { chatId } = req.params;
+		const chatId = req.params.id;
 		if (!req.user) {
 			res.status(401).json({ error: "Unauthorized: User not authenticated" });
 			return;
@@ -160,18 +156,18 @@ export const getMessages = async (
 
 		const messages = await Message.find({ chatRoom: chatId })
 			.populate("sender", "username email")
-			.sort({ timestamp: -1 });
+			.sort({ timestamp: -1 })
+			.session(session);
 
 		res.status(200).json({ messages });
 	} catch (error) {
-		console.error("Error fetching messages:", error);
 		res.status(500).json({ error: "Failed to fetch messages" });
 	}
 };
 
-// Find all chat rooms for the authenticated user
-export const findUserChatRooms = async (
-	req: Request & { user?: AuthenticatedUser },
+const findUserChatRoomsFn = async (
+	session: mongoose.ClientSession,
+	req: Request,
 	res: Response
 ) => {
 	try {
@@ -179,15 +175,62 @@ export const findUserChatRooms = async (
 			res.status(401).json({ error: "Unauthorized: User not authenticated" });
 			return;
 		}
-		const userObjectId = new Types.ObjectId(req.user._id);
+		const userObjectId = new Types.ObjectId((req.user as any)._id);
 
 		const chatRooms = await ChatRoom.find({ participants: userObjectId })
 			.populate("participants", "username email")
-			.sort({ updatedAt: -1 });
+			.sort({ updatedAt: -1 })
+			.session(session);
 
 		res.status(200).json({ chatRooms });
 	} catch (error) {
-		console.error("Error fetching chat rooms:", error);
 		res.status(500).json({ error: "Failed to fetch chat rooms" });
 	}
 };
+
+const deleteChatRoomFn = async (
+	session: mongoose.ClientSession,
+	req: Request,
+	res: Response
+) => {
+	try {
+		if (!req.user) {
+			res.status(401).json({ error: "Unauthorized: User not authenticated" });
+			return;
+		}
+		const chatId = req.params.id;
+
+		if (!chatId) {
+			res.status(400).json({ error: "Chat ID is required" });
+			return;
+		}
+
+		const chatRoom = await ChatRoom.findById(chatId);
+		if (!chatRoom) {
+			res.status(404).json({ error: "Chat room not found" });
+			return;
+		}
+
+		if (
+			!chatRoom.participants.includes(
+				new mongoose.Types.ObjectId((req.user as any)._id)
+			)
+		) {
+			res
+				.status(403)
+				.json({ error: "User not authorized to delete this chat" });
+			return;
+		}
+
+		await ChatRoom.deleteOne({ _id: chatId }, { session });
+		res.status(200).json({ message: "Chat room deleted successfully" });
+	} catch (error) {
+		res.status(500).json({ error: "Failed to delete chat room" });
+	}
+};
+
+export const newChat = transactione(newChatFn);
+export const sendMessage = transactione(sendMessageFn);
+export const getMessages = transactione(getMessagesFn);
+export const findUserChatRooms = transactione(findUserChatRoomsFn);
+export const deleteChatRoom = transactione(deleteChatRoomFn);

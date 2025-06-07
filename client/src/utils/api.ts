@@ -52,7 +52,6 @@ const logOutFN = async () => {
 			withCredentials: true, // Ensure cookies are sent with the request
 		});
 	} catch (error) {
-		console.error("Error logging out:", error);
 		throw error; // Re-throw the error to handle it in the hook
 	}
 };
@@ -86,11 +85,9 @@ export const LoginUser = () => {
 		onSuccess: (data) => {
 			logIn(data.token, data.user);
 			navigate("/");
-			console.log(data.user);
-			console.log(`Logged in successfully`, data.user, data);
 		},
 		onError: (error) => {
-			console.error(`Error logging in`, error.message);
+			console.error("Login failed:", error);
 		},
 	});
 };
@@ -104,13 +101,9 @@ export const LogoutUser = () => {
 		onSuccess: () => {
 			logout(); // Clear user data from the store
 			navigate("/gallery"); // Redirect to the gallery page
-			console.log("Logged out successfully");
 		},
 		onError: (error) => {
-			console.error(
-				"Error logging out:",
-				error instanceof Error ? error.message : error
-			);
+			console.error("Logout failed:", error);
 		},
 	});
 };
@@ -121,12 +114,11 @@ export const RegisterUser = () => {
 
 	return useMutation({
 		mutationFn: register,
-		onSuccess: (data) => {
-			console.log(`Registered successfully`, data);
+		onSuccess: () => {
 			navigate("/login");
 		},
 		onError: (error) => {
-			console.error(`Error registering`, error.message);
+			console.error("Registration failed:", error);
 		},
 	});
 };
@@ -139,7 +131,6 @@ export const GetData = (url: string) => {
 		queryKey: ["data", url],
 		queryFn: async () => {
 			const data = await getData(url, token ?? undefined);
-			console.log(`Data fetched successfully`, data);
 			return data;
 		},
 	});

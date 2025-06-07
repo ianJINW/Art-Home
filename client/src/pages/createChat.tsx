@@ -28,6 +28,7 @@ const CreateChat: React.FC = () => {
 
     try {
       const participants = [...selectedParticipants, String(userId)]
+      console.log(participants, selectedParticipants)
 
       // Send the request to create a chat room
       const response = await api.post(
@@ -38,11 +39,12 @@ const CreateChat: React.FC = () => {
         },
         { withCredentials: true }
       )
+      console.log(participants, selectedParticipants)
 
-      console.log('Chat room created:', response.data.chatRoom)
-      navigate(`/chat/${Number(response.data.chatRoom._id)}`, {
+      console.log('Chat room created:', response.data)
+      navigate(`/chat/${response.data.chat._id}`, {
         state: {
-          participants: response.data.chatRoom.participants
+          participants: response.data.chat.participants
         }
       })
     } catch (error: any) {
@@ -99,7 +101,8 @@ const CreateChat: React.FC = () => {
                     value={artist._id}
                     className='text-black dark:text-black'
                   >
-                    {artist.username}
+                    {artist.username} _-_ {artist.email} _-_
+                    {artist._id}
                   </option>
                 ))}
             </select>

@@ -1,25 +1,25 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
 import Artist from "../models/artistModels";
+import transactione from "../utils/transactions";
 
 // Utility function for handling errors
 const handleError = (res: Response, error: any, statusCode = 500) => {
-	console.error(error.stack || error.message);
 	res.status(statusCode).json({
 		message: error.message || "An unexpected error occurred",
 	});
 };
 
 // Create a new artist
-export const createArtist = async (req: Request, res: Response) => {
+const create = async (
+	session: mongoose.ClientSession,
+	req: Request,
+	res: Response
+) => {
 	const { name, bio, socials, works, user } = req.body;
-
-	// Debug log to check the request body
-	console.log("Request body:", req.body);
 
 	// Validate required fields
 	if (!name || !bio || !socials || !Array.isArray(socials)) {
-		console.log("bad");
 		res.status(400).json({
 			message:
 				"Name, bio, and socials are required, and socials must be an array",
@@ -29,7 +29,6 @@ export const createArtist = async (req: Request, res: Response) => {
 
 	// Validate and convert the user field to ObjectId
 	if (!mongoose.Types.ObjectId.isValid(user)) {
-		console.log("invalid");
 		res.status(400).json({
 			message: "Invalid user ID",
 		});
@@ -38,15 +37,17 @@ export const createArtist = async (req: Request, res: Response) => {
 
 	try {
 		// Create the artist
-		const artist = await Artist.create({
-			name,
-			bio,
-			socials,
-			works: new mongoose.Types.ObjectId(works),
-			user: new mongoose.Types.ObjectId(user),
-		});
+		const artist = await Artist.create(
+			{
+				name,
+				bio,
+				socials,
+				works: new mongoose.Types.ObjectId(works),
+				user: new mongoose.Types.ObjectId(user),
+			},
+			{ session }
+		);
 
-		console.log("success");
 		res.status(201).json({
 			message: "Artist created successfully",
 			data: artist,
@@ -58,7 +59,11 @@ export const createArtist = async (req: Request, res: Response) => {
 };
 
 // Get all artists
-export const getArtists = async (_req: Request, res: Response) => {
+const getArtistsFn = async (
+	session: mongoose.ClientSession,
+	req: Request,
+	res: Response
+) => {
 	try {
 		const artists = await Artist.find().populate("user");
 		res.status(200).json({
@@ -71,7 +76,11 @@ export const getArtists = async (_req: Request, res: Response) => {
 };
 
 // Get a single artist by ID
-export const getArtist = async (req: Request, res: Response) => {
+const getArtistFn = async (
+	session: mongoose.ClientSession,
+	req: Request,
+	res: Response
+) => {
 	const { id } = req.params;
 
 	if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -100,7 +109,11 @@ export const getArtist = async (req: Request, res: Response) => {
 };
 
 // Update an artist by ID
-export const updateArtist = async (req: Request, res: Response) => {
+const update = async (
+	session: mongoose.ClientSession,
+	req: Request,
+	res: Response
+) => {
 	const { id } = req.params;
 	const { name, bio, socials, works } = req.body;
 
@@ -118,6 +131,7 @@ export const updateArtist = async (req: Request, res: Response) => {
 			{
 				new: true,
 				runValidators: true,
+				session,
 			}
 		);
 
@@ -138,7 +152,11 @@ export const updateArtist = async (req: Request, res: Response) => {
 };
 
 // Delete an artist by ID
-export const deleteArtist = async (req: Request, res: Response) => {
+const deleter = async (
+	session: mongoose.ClientSession,
+	req: Request,
+	res: Response
+) => {
 	const { id } = req.params;
 
 	if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -149,7 +167,7 @@ export const deleteArtist = async (req: Request, res: Response) => {
 	}
 
 	try {
-		const artist = await Artist.findByIdAndDelete(id);
+		const artist = await Artist.findByIdAndDelete(id, { session });
 		if (!artist) {
 			res.status(404).json({
 				message: `Artist with ID ${id} not found`,
@@ -165,3 +183,9 @@ export const deleteArtist = async (req: Request, res: Response) => {
 		handleError(res, error);
 	}
 };
+
+export const createArtist = transactione(create);
+export const getArtists = transactione(getArtistsFn);
+export const getArtist = transactione(getArtistFn);
+export const updateArtist = transactione(update);
+export const deleteArtist = transactione(deleter);

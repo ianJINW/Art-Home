@@ -1,9 +1,15 @@
 import { Request, Response } from "express";
 import Art from "../models/artModels";
 import { cloudinary } from "../middleware/multer";
+import mongoose from "mongoose";
+import transactione from "../utils/transactions";
 
 class ArtController {
-	public async getAllArt(req: Request, res: Response): Promise<void> {
+	public async getAllArt(
+		session: mongoose.ClientSession,
+		req: Request,
+		res: Response
+	): Promise<void> {
 		try {
 			const { page = 1, limit = 20 } = req.query;
 
@@ -24,7 +30,11 @@ class ArtController {
 		}
 	}
 
-	public async getArtById(req: Request, res: Response): Promise<void> {
+	public async getArtById(
+		session: mongoose.ClientSession,
+		req: Request,
+		res: Response
+	): Promise<void> {
 		try {
 			const artId = req.params.id;
 			const artPiece = await Art.findById(artId)
@@ -46,12 +56,16 @@ class ArtController {
 		}
 	}
 
-	public async likeArt(req: Request, res: Response): Promise<void> {
+	public async likeArt(
+		session: mongoose.ClientSession,
+		req: Request,
+		res: Response
+	): Promise<void> {
 		const id = req.params.id;
 		const userId = req.body.userId;
 
 		try {
-			let artPiece = await Art.findById(id);
+			let artPiece = await Art.findById(id, { session });
 			if (!artPiece) {
 				res.status(404).json({ message: `Art piece with id ${id} not found` });
 				return;
@@ -64,7 +78,7 @@ class ArtController {
 			};
 			artPiece.likes.push(like);
 
-			await artPiece.save();
+			await artPiece.save({ session });
 
 			res
 				.status(200)
@@ -77,13 +91,17 @@ class ArtController {
 		}
 	}
 
-	public async unlikeArt(req: Request, res: Response): Promise<void> {
+	public async unlikeArt(
+		session: mongoose.ClientSession,
+		req: Request,
+		res: Response
+	): Promise<void> {
 		const id = req.params.id;
 		const userId = req.body.userId;
 		let likes = [];
 
 		try {
-			const artPiece = await Art.findById(id);
+			const artPiece = await Art.findById(id, { session });
 			if (!artPiece) {
 				res.status(404).json({ message: `Art piece with id ${id} not found` });
 				return;
@@ -94,7 +112,7 @@ class ArtController {
 			);
 
 			artPiece.likes = likes;
-			await artPiece.save();
+			await artPiece.save({ session });
 
 			res
 				.status(200)
@@ -107,7 +125,11 @@ class ArtController {
 		}
 	}
 
-	public async addComment(req: Request, res: Response): Promise<void> {
+	public async addComment(
+		session: mongoose.ClientSession,
+		req: Request,
+		res: Response
+	): Promise<void> {
 		const id = req.params.id;
 		const userId = req.body.userId;
 		const content = req.body.content;
@@ -141,13 +163,17 @@ class ArtController {
 		}
 	}
 
-	public async deleteComment(req: Request, res: Response): Promise<void> {
+	public async deleteComment(
+		session: mongoose.ClientSession,
+		req: Request,
+		res: Response
+	): Promise<void> {
 		const id = req.params.id;
 		const userId = req.body.userId;
 		let comments = [];
 
 		try {
-			const artPiece = await Art.findById(id);
+			const artPiece = await Art.findById(id, { session });
 			if (!artPiece) {
 				res.status(404).json({ message: `Art piece with id ${id} not found` });
 				return;
@@ -158,7 +184,7 @@ class ArtController {
 			);
 
 			artPiece.comments = comments;
-			await artPiece.save();
+			await artPiece.save({ session });
 
 			res.status(200).json({
 				message: `Comment deleted from art piece with id ${id}`,
@@ -173,7 +199,11 @@ class ArtController {
 		}
 	}
 
-	createArt = async (req: Request, res: Response): Promise<void> => {
+	createArt = async (
+		session: mongoose.ClientSession,
+		req: Request,
+		res: Response
+	): Promise<void> => {
 		if (!req.user /*|| !req.user.isArtist */) {
 			res.status(403).json({ message: "Only artists can create art" });
 			return;
@@ -209,7 +239,7 @@ class ArtController {
 				title,
 			});
 
-			await newArt.save();
+			await newArt.save({ session });
 			res.status(201).json({ message: "Art piece created", art: newArt });
 		} catch (error: any) {
 			console.error("Error creating art piece:", error.stack);
@@ -219,13 +249,17 @@ class ArtController {
 		}
 	};
 
-	public async updateArt(req: Request, res: Response): Promise<void> {
+	public async updateArt(
+		session: mongoose.ClientSession,
+		req: Request,
+		res: Response
+	): Promise<void> {
 		try {
 			const artId = req.params.id;
 			const { artist, description, title } = req.body;
 			const art = req.file?.path;
 
-			const artPiece = await Art.findById(artId)
+			const artPiece = await Art.findById(artId, { session })
 				.populate("likes")
 				.populate("comments")
 				.populate("artist");
@@ -245,7 +279,7 @@ class ArtController {
 					description: description || artPiece.description,
 					title: title || artPiece.title,
 				},
-				{ new: true }
+				{ new: true, session }
 			);
 
 			res.status(200).json({
@@ -260,7 +294,11 @@ class ArtController {
 		}
 	}
 
-	public async deleteArt(req: Request, res: Response): Promise<void> {
+	public async deleteArt(
+		session: mongoose.ClientSession,
+		req: Request,
+		res: Response
+	): Promise<void> {
 		try {
 			const artId = req.params.id;
 
@@ -272,7 +310,7 @@ class ArtController {
 				return;
 			}
 
-			await Art.findByIdAndDelete(artId);
+			await Art.findByIdAndDelete(artId, { session });
 			res
 				.status(200)
 				.json({ message: `Art piece with id ${artId} deleted`, artPiece });
@@ -285,4 +323,14 @@ class ArtController {
 	}
 }
 
-export default new ArtController();
+export default {
+	getAllArt: transactione(ArtController.prototype.getAllArt),
+	getArtById: transactione(ArtController.prototype.getArtById),
+	likeArt: transactione(ArtController.prototype.likeArt),
+	unlikeArt: transactione(ArtController.prototype.unlikeArt),
+	addComment: transactione(ArtController.prototype.addComment),
+	deleteComment: transactione(ArtController.prototype.deleteComment),
+	createArt: transactione(ArtController.prototype.createArt),
+	updateArt: transactione(ArtController.prototype.updateArt),
+	deleteArt: transactione(ArtController.prototype.deleteArt),
+};

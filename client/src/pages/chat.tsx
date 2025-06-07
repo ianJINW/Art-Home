@@ -6,7 +6,7 @@ import io, { Socket } from 'socket.io-client'
 import useAuthStore from '@/stores/auth.store'
 import api from '@/utils/axios'
 
-const SOCKET_URL = import.meta.env.VITE_API_SOCKET_URL
+const SOCKET_URL = import.meta.env.VITE_API_SOCKET_URL!
 
 interface Message {
   sender: { username: string } | string
@@ -17,18 +17,6 @@ interface Message {
 const Chat: React.FC = () => {
   const { id: roomId } = useParams<{ id: string }>()
   const user = useAuthStore(state => state.user)
-  // 1) Try in-memory token, 2) fallback to localStorage
-  const accessToken =
-    useAuthStore.getState().accessToken ||
-    (() => {
-      try {
-        const stored = JSON.parse(localStorage.getItem('auth-store') || '{}')
-        return stored.state?.accessToken || ''
-      } catch {
-        // If parsing fails, we quietly return empty string
-        return ''
-      }
-    })()
 
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -36,48 +24,50 @@ const Chat: React.FC = () => {
   const socketRef = useRef<typeof Socket | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // ── Fetch past messages and set header ─────────────────────
+  // Fetch history
   useEffect(() => {
     if (!roomId) return
 
-    const fetchChatHistory = async () => {
-      try {
-        const { data } = await api.get<{ messages: Message[] }>(
-          `/chat/${roomId}`
-        )
-        setMessages(data.messages)
-
-        if (data.messages.length) {
-          const first = data.messages[0]
+    api
+      .get<{ messages: Message[] }>(`/chat/${roomId}`)
+      .then(res => {
+        setMessages(res.data.messages)
+        if (res.data.messages.length) {
+          const first = res.data.messages[0]
           const other =
             typeof first.sender === 'object'
               ? first.sender.username
               : first.sender
           setChatHeader(other)
         }
-      } catch (err) {
+      })
+      .catch(err => {
         console.error('❌ Error fetching chat history:', err)
         setChatHeader('Chat')
-      }
-    }
-
-    fetchChatHistory()
+      })
   }, [roomId])
 
-  // ── Socket.io: connect, join, receive ────────────────────
+  // Socket.IO connection
   useEffect(() => {
-    // guard: need both roomId and a token (or user)
-    if (!roomId || (!user && !accessToken)) return
+    if (!roomId || !user) return
 
-    // ⚠️ Precarious: passing token via `auth` is visible in network tab
-    // Alternative: use `extraHeaders: { Authorization: 'Bearer …' }` if CORS allows it
     const socket = io(SOCKET_URL, {
-      auth: { token: accessToken }
+      auth: {
+        token:
+          /* we’re now using HTTP-only cookie, so omit this or leave empty */ {}
+      },
+      // move withCredentials under transportOptions.polling:
+      transportOptions: {
+        polling: {
+          withCredentials: true
+        }
+      }
     })
+
     socketRef.current = socket
 
     socket.on('connect', () => {
-      console.log('🔌 Connected to socket, joining room', roomId)
+      console.log('🔌 Connected, joining room', roomId)
       socket.emit('joinRoom', roomId)
     })
 
@@ -85,31 +75,29 @@ const Chat: React.FC = () => {
       setMessages(prev => [...prev, newMsg])
     })
 
-    socket.on('disconnect', (reason: any) => {
-      console.log('🔌 Disconnected:', reason)
+    socket.on('disconnect', reason => {
+      console.log('❌ Disconnected:', reason)
     })
 
     return () => {
       socket.disconnect()
     }
-  }, [roomId, user, accessToken])
+  }, [roomId, user])
 
-  // ── Auto-scroll to bottom ──────────────────────────────────
+  // Scroll on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // ── Send a message ────────────────────────────────────────
+  // Send a message
   const sendMessage = async () => {
     const text = input.trim()
     if (!text || !roomId) return
 
     try {
-      // Here we optimistically append; alt: wait for server response
-      const payload = { message: text }
       const { data } = await api.post<{ messages: Message[] }>(
         `/chat/${roomId}`,
-        payload
+        { message: text }
       )
       setMessages(data.messages)
       setInput('')
@@ -120,6 +108,10 @@ const Chat: React.FC = () => {
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') sendMessage()
+  }
+
+  if (!user) {
+    return <p className='text-center p-4'>Please log in to join the chat.</p>
   }
 
   return (

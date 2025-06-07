@@ -1,3 +1,12 @@
+interface AuthenticatedUser {
+	_id: string;
+	username: string;
+	email: string;
+	image?: string;
+	bio?: string;
+	blockedUsers: string[];
+}
+
 import mongoose, { Types } from "mongoose";
 import { ChatRoom, IMessage, Message } from "../models/chatModel";
 import { Request, Response } from "express";
@@ -6,7 +15,10 @@ import User from "../models/userModels";
 const JWT_SECRET = process.env.JWT_SECRET as string;
 
 // Create or retrieve a chat room
-export const newChat = async (req: Request, res: Response) => {
+export const newChat = async (
+	req: Request & { user?: AuthenticatedUser },
+	res: Response
+) => {
 	try {
 		// 1. Extract the target user ID from the request body
 		const { chatee } = req.body;
@@ -16,7 +28,7 @@ export const newChat = async (req: Request, res: Response) => {
 			res.status(401).json({ error: "Unauthorized: User not authenticated" });
 			return;
 		}
-		const me = req.user._id; // our own user ID
+		const me = req.user._id;
 
 		// 3. Look up the “other” user by ID
 		const other = await User.findById(chatee);
@@ -84,7 +96,10 @@ export const newChat = async (req: Request, res: Response) => {
 };
 
 // Send a message in a chat room
-export const sendMessage = async (req: Request, res: Response) => {
+export const sendMessage = async (
+	req: Request & { user?: AuthenticatedUser },
+	res: Response
+) => {
 	try {
 		if (!req.user) {
 			res.status(401).json({ error: "Unauthorized: User not authenticated" });
@@ -128,7 +143,10 @@ export const sendMessage = async (req: Request, res: Response) => {
 };
 
 // Retrieve messages from a chat room
-export const getMessages = async (req: Request, res: Response) => {
+export const getMessages = async (
+	req: Request & { user?: AuthenticatedUser },
+	res: Response
+) => {
 	try {
 		const { chatId } = req.params;
 		if (!req.user) {
@@ -152,7 +170,10 @@ export const getMessages = async (req: Request, res: Response) => {
 };
 
 // Find all chat rooms for the authenticated user
-export const findUserChatRooms = async (req: Request, res: Response) => {
+export const findUserChatRooms = async (
+	req: Request & { user?: AuthenticatedUser },
+	res: Response
+) => {
 	try {
 		if (!req.user) {
 			res.status(401).json({ error: "Unauthorized: User not authenticated" });

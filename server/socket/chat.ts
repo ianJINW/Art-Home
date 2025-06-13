@@ -1,9 +1,9 @@
 import { Server } from "socket.io";
 import http from "http";
-import { ChatRoom, Message } from "../models/chatModel";
-import cookie from "cookie";
+import * as cookie from "cookie";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+import { ChatRoom, Message } from "../models/chatModel";
 
 export const initializeSocket = (server: http.Server) => {
 	const io = new Server(server, {
@@ -12,17 +12,18 @@ export const initializeSocket = (server: http.Server) => {
 			methods: ["GET", "POST"],
 			credentials: true,
 		},
+		cookie: true,
 	});
 
 	io.use(async (socket, next) => {
 		try {
 			const header = socket.request.headers.cookie;
-			if (!header) {
-				throw new Error("Cookie missing!!");
-			}
+			if (!header) throw new Error("Cookie missing!!");
+
+			console.log(header);
 
 			const { accessToken } = cookie.parse(header);
-			if (!accessToken) throw new Error("Ne cookies");
+			if (!accessToken) throw new Error("No cookies");
 
 			const decoded = jwt.verify(accessToken, process.env.JWT_SECRET!);
 			socket.data.user = decoded;
@@ -37,8 +38,8 @@ export const initializeSocket = (server: http.Server) => {
 		const user = socket.data.user;
 		console.log(`%{user.username} Connected to socket`);
 
-		socket.on("joinRoom", async (roomId: string) => {
-			if (!roomId) {
+		socket.on("joinRoom", async (roomId: string, participants: string[]) => {
+			if (!roomId || !participants || participants.length === 0) {
 				socket.emit("error", { message: "Room ID is required" });
 				return;
 			}
@@ -54,9 +55,11 @@ export const initializeSocket = (server: http.Server) => {
 					await chatRoom.save();
 					socket.emit("roomCreated", { roomId });
 				}
+
+				console.log(chatRoom);
 			} catch (error) {
 				console.error("Error joining room:", error);
-				socket.emit("error", { message: "Failed to join room" });
+				socket.emit("error", { message: `Failed to join room ${error}` });
 			}
 		});
 

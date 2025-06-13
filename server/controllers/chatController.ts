@@ -15,7 +15,6 @@ import transactione from "../utils/transactions";
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
 
-// Create or retrieve a chat room
 const newChatFn = async (
 	session: mongoose.ClientSession,
 	req: Request,
@@ -129,7 +128,7 @@ const sendMessageFn = async (
 
 		const messages = await Message.find({ chatRoom: chatId })
 			.populate("sender", "username email")
-			.sort({ timestamp: 1 })
+			.sort({ timestamp: -1 })
 			.session(session);
 
 		res.status(201).json({ message: newMessage, messages });
@@ -156,8 +155,10 @@ const getMessagesFn = async (
 
 		const messages = await Message.find({ chatRoom: chatId })
 			.populate("sender", "username email")
-			.sort({ timestamp: -1 })
+			.sort({ timestamp: 1 })
 			.session(session);
+
+		console.log;
 
 		res.status(200).json({ messages });
 	} catch (error) {

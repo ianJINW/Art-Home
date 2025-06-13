@@ -46,7 +46,7 @@ const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 			{
 				role: "user",
 				content: "What is the capital of France?",
-			},
+			}, 
 		],
 	});
 	console.log(res.choices[0].message.content);
@@ -69,7 +69,7 @@ app.use("/api/v1/artist", artistRouter);
 
 initializeSocket(server);
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
 	console.log(`Server running on port ${PORT}`);
 });
 

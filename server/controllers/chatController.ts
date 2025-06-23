@@ -128,7 +128,7 @@ const sendMessageFn = async (
 
 		const messages = await Message.find({ chatRoom: chatId })
 			.populate("sender", "username email")
-			.sort({ timestamp: -1 })
+			.sort({ timestamp: 1 })
 			.session(session);
 
 		res.status(201).json({ message: newMessage, messages });
@@ -155,6 +155,7 @@ const getMessagesFn = async (
 
 		const messages = await Message.find({ chatRoom: chatId })
 			.populate("sender", "username email")
+			.populate("chatRoom", "participants")
 			.sort({ timestamp: 1 })
 			.session(session);
 

@@ -17,10 +17,10 @@ export const initializeSocket = (server: http.Server) => {
 
 	io.use(async (socket, next) => {
 		try {
+			console.log("Socket authentication attempt...");
+
 			const header = socket.request.headers.cookie;
 			if (!header) throw new Error("Cookie missing!!");
-
-			console.log(header);
 
 			const { accessToken } = cookie.parse(header);
 			if (!accessToken) throw new Error("No cookies");
@@ -36,30 +36,48 @@ export const initializeSocket = (server: http.Server) => {
 
 	io.on("connection", (socket) => {
 		const user = socket.data.user;
-		console.log(`%{user.username} Connected to socket`);
+		console.log(`${user.username} Connected to socket`);
 
 		socket.on("joinRoom", async (roomId: string, participants: string[]) => {
-			if (!roomId || !participants || participants.length === 0) {
-				socket.emit("error", { message: "Room ID is required" });
+			console.log("Join room attempt:", {
+				roomId,
+				participants,
+				user: user._id,
+			});
+
+			if (!roomId || !participants || participants.length < 2) {
+				socket.emit("error", { message: "Invalid room data" });
 				return;
 			}
 
-			socket.join(roomId);
-			console.log(`User joined room: ${roomId}`);
+			// Ensure valid MongoDB ObjectIds
+			if (!participants.every((id) => mongoose.Types.ObjectId.isValid(id))) {
+				socket.emit("error", { message: "Invalid participant IDs" });
+				return;
+			}
 
 			try {
-				let chatRoom = await ChatRoom.findOne({ roomId });
+				let chatRoom = await ChatRoom.findById(roomId);
 
 				if (!chatRoom) {
-					chatRoom = new ChatRoom({ roomId });
+					chatRoom = new ChatRoom({
+						_id: new mongoose.Types.ObjectId(roomId),
+						participants: participants,
+					});
 					await chatRoom.save();
-					socket.emit("roomCreated", { roomId });
+					console.log("New chat room created:", chatRoom);
 				}
 
-				console.log(chatRoom);
+				socket.join(roomId);
+				console.log(`User ${user.username} joined room: ${roomId}`);
+
+				socket.emit("roomJoined", {
+					roomId,
+					participants: chatRoom.participants,
+				});
 			} catch (error) {
 				console.error("Error joining room:", error);
-				socket.emit("error", { message: `Failed to join room ${error}` });
+				socket.emit("error", { message: "Failed to join room" });
 			}
 		});
 
@@ -67,33 +85,36 @@ export const initializeSocket = (server: http.Server) => {
 			"chatMessage",
 			async (data: { roomId: string; sender: string; message: string }) => {
 				const { roomId, sender, message } = data;
+				console.log("Received message:", { roomId, sender, message });
 
 				if (!roomId || !sender || !message) {
-					socket.emit("error", { message: "Missing required fields" });
+					socket.emit("error", { message: "Missing message data" });
 					return;
 				}
 
-				console.log(`Message in room ${roomId} from ${sender}: ${message}`);
-
 				try {
-					const chatRoom = await ChatRoom.findOne({ roomId });
-
+					const chatRoom = await ChatRoom.findById(roomId);
 					if (!chatRoom) {
-						socket.emit("error", { message: "Room not found" });
+						socket.emit("error", { message: "Chat room not found" });
 						return;
 					}
 
-					const senderId = new mongoose.Types.ObjectId(sender);
-
 					const newMessage = new Message({
-						sender: senderId,
+						sender: new mongoose.Types.ObjectId(sender),
 						content: message,
 						chatRoom: chatRoom._id,
 						timestamp: new Date(),
 					});
 
 					await newMessage.save();
-					io.to(roomId).emit("message", { roomId, sender, message });
+
+					// Emit the populated message
+					const populatedMessage = await Message.findById(newMessage._id)
+						.populate("sender", "username email")
+						.lean();
+
+					io.to(roomId).emit("message", populatedMessage);
+					console.log("Message emitted:", populatedMessage);
 				} catch (error) {
 					console.error("Error sending message:", error);
 					socket.emit("error", { message: "Failed to send message" });
@@ -102,7 +123,9 @@ export const initializeSocket = (server: http.Server) => {
 		);
 
 		socket.on("disconnect", () => {
-			console.log("User disconnected");
+			console.log(`User ${user.username} disconnected`);
 		});
 	});
+
+	return io;
 };

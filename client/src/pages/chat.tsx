@@ -1,3 +1,19 @@
+interface Message {
+  sender:
+    | {
+        _id: string
+        username: string
+        email: string
+      }
+    | string
+  content: string
+  timestamp: string
+  chatRoom?: {
+    _id: string
+    participants: string[]
+  }
+}
+
 import React, { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import io, { Socket } from 'socket.io-client'
@@ -6,48 +22,70 @@ import api from '@/utils/axios'
 
 const SOCKET_URL = import.meta.env.VITE_API_SOCKET_URL!
 
-interface Message {
-  sender: { username: string } | string
-  message: string
-  timestamp: string
-}
-
 const Chat: React.FC = () => {
   const { id: roomId } = useParams<{ id: string }>()
-  const user = useAuthStore(state => state.user)
+  type User = { _id: string; username: string }
+  const user = useAuthStore(state => state.user) as User | null
 
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [chatHeader, setChatHeader] = useState('Chat')
+  const [otherUserId, setOtherUserId] = useState<string | null>(null)
   const socketRef = useRef<Socket | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Fetch history via HTTP
   useEffect(() => {
-    if (!roomId) return
+    if (!roomId || !user) return
 
     api
-      .get<{ messages: Message[] }>(`/chat/${roomId}`)
-      .then(res => {
-        setMessages(res.data.messages)
-        if (res.data.messages.length) {
-          const first = res.data.messages[0]
-          const other =
-            typeof first.sender === 'object'
-              ? first.sender.username
-              : first.sender
-          setChatHeader(other)
+      .get<{
+        messages: Message[]
+        participants: { _id: string; username: string }[]
+      }>(`/chat/${roomId}`)
+      .then(
+        (res: {
+          data: {
+            messages: Message[]
+            participants: { _id: string; username: string }[]
+          }
+        }) => {
+          setMessages(res.data.messages)
+
+          if (res.data.participants) {
+            const otherUser = res.data.participants.find(
+              (p: { _id: string }) => p._id !== user?._id
+            )
+            if (otherUser) {
+              setOtherUserId(otherUser._id)
+              setChatHeader(otherUser.username)
+            }
+          }
+          console.log(res.data, 'Debugging like ')
+          console.log(
+            'user._id:',
+            user?._id,
+            'participants:',
+            res.data.participants
+          )
+
+          if (res.data.messages.length) {
+            const first = res.data.messages[0]
+            const other =
+              typeof first.sender === 'object'
+                ? first.sender.username
+                : first.sender
+            setChatHeader(other)
+          }
         }
-      })
-      .catch(err => {
+      )
+      .catch((err: unknown) => {
         console.error('❌ Error fetching chat history:', err)
         setChatHeader('Chat')
       })
-  }, [roomId])
+  }, [roomId, user])
 
-  // Socket.IO connection
   useEffect(() => {
-    if (!roomId || !user) return
+    if (!roomId || !user || !otherUserId) return
 
     const socket = io(SOCKET_URL, {
       transportOptions: {
@@ -58,7 +96,16 @@ const Chat: React.FC = () => {
     socketRef.current = socket
 
     socket.on('connect', () => {
-      socket.emit('joinRoom', roomId, [user._id])
+      if (
+        typeof user._id === 'string' &&
+        typeof otherUserId === 'string' &&
+        user._id !== otherUserId
+      ) {
+        console.log('Joining room', roomId, [user._id, otherUserId])
+        socket.emit('joinRoom', roomId, [user._id, otherUserId])
+      } else {
+        console.error('Invalid user IDs for joinRoom:', user._id, otherUserId)
+      }
     })
 
     // Listen for real-time messages
@@ -73,7 +120,7 @@ const Chat: React.FC = () => {
     return () => {
       socket.disconnect()
     }
-  }, [roomId, user])
+  }, [roomId, user, otherUserId])
 
   // Scroll on new messages
   useEffect(() => {
@@ -86,7 +133,6 @@ const Chat: React.FC = () => {
     if (!text || !roomId) return
 
     try {
-      // 1. Send via HTTP to persist and get updated messages
       const res = await api.post<{ message: Message; messages: Message[] }>(
         `/chat/${roomId}`,
         { message: text }
@@ -98,7 +144,7 @@ const Chat: React.FC = () => {
       socketRef.current?.emit('chatMessage', {
         roomId,
         sender: user?._id,
-        message: text
+        content: text
       })
     } catch (err) {
       console.error('❌ Error sending message:', err)
@@ -137,7 +183,7 @@ const Chat: React.FC = () => {
                 <strong className='block text-sm mb-1'>
                   {isOwn ? 'You' : senderName}
                 </strong>
-                {msg.message}
+                {msg.content}
                 <div className='text-xs text-gray-500 dark:text-gray-400 mt-1 text-right'>
                   {new Date(msg.timestamp).toLocaleTimeString()}
                 </div>
@@ -145,6 +191,7 @@ const Chat: React.FC = () => {
             </div>
           )
         })}
+
         <div ref={messagesEndRef} />
       </div>
 

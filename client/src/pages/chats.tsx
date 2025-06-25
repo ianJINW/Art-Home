@@ -19,6 +19,11 @@ interface ChatRoom {
 const Chats: React.FC = () => {
   const { data: chats, isPending, isError, error } = GetData(`/chat`)
   const user = useAuthStore(state => state.user)
+  const isHydrated = useAuthStore(state => state._hasHydrated)
+  if (!isHydrated) {
+    console.warn('Auth store not hydrated yet, waiting for hydration...')
+    return null
+  }
 
   // Render loading state
   if (isPending) {
@@ -69,13 +74,10 @@ const Chats: React.FC = () => {
       <h1 className='text-2xl font-bold mb-4'>Chats</h1>
       <ul className='space-y-4'>
         {chats.chatRooms.map((chat: ChatRoom) => {
-          // Find the other participant (not the logged-in user)
           const other = chat.participants.find(
-            p =>
-              p.username !== user?.username &&
-              p.id !== user?.id &&
-              p._id !== user?.id
+            p => p.username !== user?.username && p._id !== user?._id
           )
+
           return (
             <li
               key={chat._id}

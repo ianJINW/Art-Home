@@ -113,7 +113,7 @@ const Chat: React.FC = () => {
       setMessages(prev => [...prev, newMsg])
     })
 
-    socket.on('disconnect', reason => {
+    socket.on('disconnect', (reason: unknown) => {
       console.log('❌ Disconnected:', reason)
     })
 

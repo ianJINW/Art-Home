@@ -10,16 +10,20 @@ const api = axios.create({
 
 api.interceptors.request.use(
 	(config) => {
-		const token = localStorage.getItem("auth-store");
-
+		const store = localStorage.getItem("auth-store");
+		let token = "";
+		if (store) {
+			try {
+				const parsed = JSON.parse(store);
+				token = parsed.state?.accessToken || parsed.accessToken || "";
+			} catch {}
+		}
 		if (token) {
 			config.headers["Authorization"] = `Bearer ${token}`;
 		}
 		return config;
 	},
-	(error) => {
-		return Promise.reject(error);
-	}
+	(error) => Promise.reject(error)
 );
 
 api.interceptors.response.use(
@@ -39,9 +43,6 @@ api.interceptors.response.use(
 					{},
 					{ withCredentials: true }
 				);
-
-				// Save the new access token
-				localStorage.setItem("auth-store", data.accessToken);
 
 				// Retry the original request with the new access token
 				originalRequest.headers["Authorization"] = `Bearer ${data.accessToken}`;

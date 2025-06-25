@@ -53,6 +53,7 @@ const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 })();*/
 
 connectDB();
+initializeSocket(server);
 
 app.use(helmet());
 app.use(express.json());
@@ -66,8 +67,6 @@ app.use(authToken);
 app.use("/api/v1/art", artRouter);
 app.use("/api/v1/chat", chatRouter);
 app.use("/api/v1/artist", artistRouter);
-
-initializeSocket(server);
 
 server.listen(PORT, () => {
 	console.log(`Server running on port ${PORT}`);

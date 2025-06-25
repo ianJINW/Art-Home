@@ -16,7 +16,9 @@ const transactione =
 			await fn(session, req, res);
 			await session.commitTransaction();
 		} catch (error) {
-			await session.abortTransaction();
+			if (session.inTransaction()) {
+				await session.abortTransaction();
+			}
 			res.status(500).json({ message: "Transaction failed", error });
 		} finally {
 			session.endSession();

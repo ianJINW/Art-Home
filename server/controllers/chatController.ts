@@ -105,6 +105,7 @@ const sendMessageFn = async (
 		}
 
 		const chatRoom = await ChatRoom.findById(chatId);
+		console.log("Chat room found:", chatRoom);
 		if (!chatRoom) {
 			res.status(404).json({ error: "Chat room not found" });
 			return;
@@ -125,6 +126,7 @@ const sendMessageFn = async (
 		}) as IMessage;
 
 		await newMessage.save({ session });
+		console.log("New message saved:", newMessage);
 
 		const messages = await Message.find({ chatRoom: chatId })
 			.populate("sender", "username email")

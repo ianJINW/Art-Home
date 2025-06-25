@@ -1,31 +1,42 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { formData } from "../utils/api";
+
+export interface AuthUser {
+	_id: string;
+	id?: string;
+	username: string;
+	email: string;
+	image?: string | null;
+}
 
 interface AuthState {
-	user: formData | null;
+	user: AuthUser | null;
 	accessToken: string | null;
 	isDark: boolean;
-	login: (token: string, user: formData) => void;
+	_hasHydrated: boolean;
+	login: (token: string, user: AuthUser) => void;
 	logout: () => void;
+	setHydrated: () => void;
 }
 
 const useAuthStore = create<AuthState>()(
 	persist(
 		(set, get) => ({
-			user: get()?.user || null,
-			accessToken: get()?.accessToken || null,
+			user: null,
+			accessToken: null,
 			isDark: false,
+			_hasHydrated: false,
 			login: (token, user) =>
 				set({
 					accessToken: token,
-					user: user,
+					user,
 				}),
 			logout: () =>
 				set({
 					user: null,
 					accessToken: null,
 				}),
+			setHydrated: () => set({ _hasHydrated: true }),
 		}),
 		{
 			name: "auth-store",
@@ -33,6 +44,9 @@ const useAuthStore = create<AuthState>()(
 				user: state.user,
 				accessToken: state.accessToken,
 			}),
+			onRehydrateStorage: () => (state) => {
+				state?.setHydrated();
+			},
 		}
 	)
 );

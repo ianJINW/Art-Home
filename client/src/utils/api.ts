@@ -6,7 +6,8 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 export interface formData {
 	username: string;
 	password?: string;
-	id: number;
+	id?: string;
+	_id?: string;
 	email: string;
 	image?: File | null;
 }
@@ -47,13 +48,9 @@ const register = async (credentials: formData): Promise<RegisterResponse> => {
 };
 
 const logOutFN = async () => {
-	try {
-		await api.post("user/logout", null, {
-			withCredentials: true, // Ensure cookies are sent with the request
-		});
-	} catch (error) {
-		throw error; // Re-throw the error to handle it in the hook
-	}
+	await api.post("user/logout", null, {
+		withCredentials: true,
+	});
 };
 
 // Get data API call
@@ -83,7 +80,16 @@ export const LoginUser = () => {
 	return useMutation({
 		mutationFn: login,
 		onSuccess: (data) => {
-			logIn(data.token, data.user);
+			function normalizeUser(user: LoginResponse["user"]) {
+				if (!user) return user;
+				return {
+					...user,
+					_id: user._id || user.id,
+					id: user._id || user.id,
+				};
+			}
+
+			logIn(data.token, normalizeUser(data.user));
 			navigate("/");
 		},
 		onError: (error) => {

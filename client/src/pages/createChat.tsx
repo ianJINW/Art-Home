@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { GetData } from '@/utils/api'
 import api from '@/utils/axios'
 import useAuthStore from '@/stores/auth.store'
+import { AxiosError } from 'axios'
 
 const CreateChat: React.FC = () => {
   const { data: users, isPending, isError, error } = GetData('/user')
@@ -47,15 +48,15 @@ const CreateChat: React.FC = () => {
           participants: response.data.chat.participants
         }
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating chat room:', error)
-      if (error.response) {
+      if (error instanceof AxiosError) {
         setFormError(
-          error.response.data.error ||
+          error.response?.data.error ||
             'Failed to create chat room. Please try again.'
         )
       } else {
-        setFormError('Failed to a nmew create chat room. Please try again.')
+        setFormError('Failed to create chat room. Please try again.')
       }
     }
   }

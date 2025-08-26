@@ -132,3 +132,41 @@ button:focus-visible {
 		--navbar-link-hover: bisque;
 	}
 }
+
+section {
+	padding: 12px 16px;
+	display: flex;
+	flex-direction: column;
+	overflow-y: scroll;
+	height: 60dvh;
+	width: 80dvw;
+}
+
+article {
+	border: 1px solid #eee;
+	border-radius: 8px;
+	margin: 8px 0;
+	background-color: #f9f9f9;
+	d &:hover {
+		background-color: darken(#f9f9f9, 5%);
+	}
+}
+.message {
+	padding: 12px 16px;
+	display: flex;
+	flex-direction: column;
+	width: min(100%, 40dvw);
+	border-bottom: 1px solid #eee;
+}
+
+.message.sent {
+	background-color: #192e09;
+	justify-content: flex-end;
+	right: 0;
+}
+
+.message.received {
+	background-color: #df3939;
+	justify-content: flex-start;
+	left: 0;
+}

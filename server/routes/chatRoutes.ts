@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {
-	sendMessage,
-	newChat,
+/* 	sendMessage,
+ */	newChat,
 	findUserChatRooms,
 	getMessages,
 	deleteChatRoom,
@@ -13,7 +13,7 @@ chatRouter.route("/").get(findUserChatRooms).post(newChat);
 chatRouter
 	.route("/:id")
 	.get(getMessages)
-	.post(sendMessage)
-	.delete(deleteChatRoom);
+/* 	.post(sendMessage)
+ */	.delete(deleteChatRoom);
 
 export default chatRouter;

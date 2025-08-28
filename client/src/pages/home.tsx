@@ -3,7 +3,6 @@ import React from "react";
 
 const Home: React.FC = () => {
 	const user = useAuthStore((state) => state.user);
-	console.log(user);
 
 	return (
 		<>

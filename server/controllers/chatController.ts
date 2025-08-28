@@ -99,6 +99,8 @@ const sendMessageFn = async (
 		const { message } = req.body;
 		const senderId = (req.user as any)._id;
 
+		console.log(`Chat ID: ${chatId}, Message: ${message}`);
+
 		if (!chatId || !message) {
 			res.status(400).json({ error: "Missing required fields" });
 			return;
@@ -129,11 +131,11 @@ const sendMessageFn = async (
 		console.log("New message saved:", newMessage);
 
 		const messages = await Message.find({ chatRoom: chatId })
-			.populate("sender", "username email")
+			.populate("sender", "username")
 			.sort({ timestamp: 1 })
 			.session(session);
 
-		res.status(201).json({ message: newMessage, messages });
+		res.status(201).json({ messages });
 	} catch (error) {
 		res.status(500).json({ error: "Failed to send message" });
 	}
@@ -160,8 +162,6 @@ const getMessagesFn = async (
 			.populate("chatRoom", "participants")
 			.sort({ timestamp: 1 })
 			.session(session);
-
-		console.log;
 
 		res.status(200).json({ messages });
 	} catch (error) {

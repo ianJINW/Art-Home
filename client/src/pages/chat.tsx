@@ -1,138 +1,139 @@
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import io, { Socket } from "socket.io-client";
+import useAuthStore from "@/stores/auth.store";
+import { useParams } from "react-router-dom";
+import { GetData, PostData } from "@/utils/api";
+import { XCircle } from "lucide-react";
+
 interface Message {
-	_id: string;
-	sender: {
-		_id: string;
-		username: string;
-	};
-	title: string;
-	content: string;
-	timestamp: string;
+  _id: string;
+  sender?: { _id: string; username: string };
+  content: string;
+  timestamp: string;
 }
 
-import useAuthStore from "@/stores/auth.store";
-import api from "@/utils/axios";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
-import { MessageCircle } from "lucide-react";
-import io from "socket.io-client";
-
 const Chat: React.FC = () => {
-	const { user, accessToken } = useAuthStore();
-	const { id: roomId } = useParams<{ id: string }>();
+  const { user, accessToken } = useAuthStore();
+  const { id: roomId } = useParams<{ id: string }>();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputValue, setInputValue] = useState("");
+  const socketRef = useRef<typeof Socket | null>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-	const [messages, setMessages] = useState<Message[]>([]);
-	const [inputValue, setInputValue] = useState("");
-	const messagesRef = useRef<Message[]>([]);
+  const { mutate, isError, error } = PostData(`/chat/${roomId}`);
+  const { data: chatData, error: chatError, isError: chatIsError } = GetData(`/chat/${roomId}`);
 
-	const backendUrl = import.meta.env.VITE_SOCKET_URL;
+  useEffect(() => {
+    const socket = io(import.meta.env.VITE_API_SOCKET_URL as string, {
+      transports: ["websocket"],
+      auth: { token: accessToken },
+      secure: true,
+    });
 
-	const socket = io(backendUrl, {
-		transports: ["websocket"],
-		auth: { token: accessToken },
-		secure: true,
-	});
+    socketRef.current = socket;
 
-	socket.on("connect", () => {
-		console.log("Connected to socket server");
-	});
+    socket.on("chat message", (message: Message) => {
 
-	socket.on("disconnect", () => {
-		console.log("Disconnected from socket server");
-	});
+      console.log("New chat message received:", message);
 
-/* 	socket.on("connect_error", (err: unknown) => {
-		console.error("Connection error:", err);
-	}); */
+      setMessages((prev) => [...prev, message]);
+    });
+    return () => {
+      socket.off("chat message");
+      socket.disconnect();
+    };
+  }, [accessToken]);
 
-	useEffect(() => {
-		socket.on("chat message", (message: Message) => {
-			setMessages((prev) => [...prev, message]);
-		});
+  useEffect(() => {
+    if (!roomId) return;
 
-		return () => {
-			socket.off("chat message");
-		};
-	}, [socket]);
+    if (chatData?.messages && Array.isArray(chatData.messages)) {
+      setMessages(chatData.messages as Message[]);
+    }
 
-	useEffect(() => {
-		messagesRef.current = messages;
-	}, [messages]);
+  }, [roomId, chatData]);
 
-	useEffect(() => {
-		if (!roomId) return;
-		(async () => {
-			try {
-				const res = await api.get(`/chat/${roomId}`);
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
-		
+  const sendMessage = useCallback(
+    async (message: string) => {
+      if (!roomId || !socketRef.current) return;
+      try {
+        await mutate({ message: inputValue, chatId: roomId })
+        socketRef.current.emit("chatmessage", { message, chatRoom: roomId });
+      } catch (e) {
+        console.error(e);
 
-				setMessages(res.data.messages || []);
-			} catch (error) {
-				console.error("Error fetching chat messages:", error);
-			}
-		})();
-	}, [roomId]);
+      }
+    },
+    [roomId, mutate, inputValue]
+  );
 
-	const sendMessage = useCallback(
-		async (content: string) => {
-			try {
-				const message = {
-					id: crypto.randomUUID(),
-					title: "New Message",
-					content,
-				};
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (inputValue.trim()) {
+      sendMessage(inputValue);
+      setInputValue("");
+    }
+  };
 
-				const res = await api.post(`/chat/${roomId}/messages`, message);
-				const newMessage = res.data.message;
-				setMessages((prev) => [...prev, newMessage]);
-			} catch (error) {
-				console.error("Error sending chat message:", error);
-			}
-		},
-		[roomId]
-	);
 
-	const sendMessageHandler = useCallback(
-		(e: React.FormEvent<HTMLFormElement>) => {
-			e.preventDefault();
-			if (inputValue.trim()) {
-				sendMessage(inputValue);
-				setInputValue("");
-			}
-		},
-		[inputValue, sendMessage]
-	);
+  return (
+    <main className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
+      <section className="flex-1 overflow-y-auto p-4 space-y-2 h-[calc(100vh-200px)]">
+        {chatIsError && (
+          <div className="text-red-500">
 
-	return (
-		<main>
-			<header></header>
+            {chatError?.message || `An error occurred while fetching chat data.`}
+          </div>
+        )}
+        {messages.map((msg) => {
+          const isMe = msg.sender?._id === user?._id;
+          const align = isMe ? 'justify-end items-end' : 'justify-start items-start';
+          const tail = isMe ? 'before:content-[""] before:absolute before:bottom-0 before:right-0 before:w-3 before:h-3 before:bg-blue-500 before:translate-x-2 before:translate-y-1 before:rounded-tl-md' :
+            'before:content-[""] before:absolute before:bottom-0 before:left-0 before:w-3 before:h-3 before:bg-gray-200 before:-translate-x-2 before:translate-y-1 before:rounded-tr-md';
+          return (
+            <div key={msg._id} className={`relative flex ${align}`}>
+              <div className={`w-fit max-w-[60dvw] p-4 rounded-lg ${isMe ? "bg-blue-500 text-white" : "bg-gray-200"} ${tail}`}>
+                <div className="font-semibold mb-1">{msg.sender?.username}</div>
+                <div>{msg.content}</div>
+                <div className="text-xs text-gray-600 mt-1 text-right">{new Date(msg.timestamp).toLocaleTimeString()}</div>
+              </div>
+            </div>
+          );
+        })}
+        <div ref={bottomRef} />
+      </section>
 
-			<section>
-				{Array.isArray(messages) ? (
-					messages.map((message: Message) => {
-						const isMe = message.sender._id === user?.id;
-						console.log(message, user);
-						return (	
-							<article key={message._id} className={`message${isMe ? " sent" : " received"}`}>
-								<h3>
-									<MessageCircle /> {message.sender?.username}
-								</h3>
-							<p>{message.content}</p>
+      <form
+        onSubmit={handleSubmit}
+        className="flex p-4 border-t bg-white dark:bg-gray-800"
+      >
+        {isError && (
+          <div className="flex items-center bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <XCircle className="mr-2" size={20} />
+            <span className="block flex-1">{error?.message}</span>
 
-							<small>{new Date(message.timestamp).toLocaleString()}</small>
-						</article>
-					);
-				})) : (
-						<p>No messages</p>
-				)}
-			</section>
-
-			<form onSubmit={sendMessageHandler}>
-				<input type="text" placeholder="Type your message..." />
-				<button type="submit">Send</button>
-			</form>
-		</main>
-	);
+          </div>
+        )}        <input
+          type="text"
+          className="flex-1 p-2 rounded-l-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none"
+          placeholder="Type your message…"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+        />
+        <button
+          type="submit"
+          className="px-4 bg-blue-600 text-white rounded-r-lg hover:bg-blue-700 disabled:opacity-50"
+          disabled={!inputValue.trim()}
+        >
+          Send
+        </button>
+      </form>
+    </main>
+  );
 };
 
 export default Chat;

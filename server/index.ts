@@ -56,7 +56,7 @@ console.log('Socket initialized 2')
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   console.log(
-    `Request received: ${req.method} ${req.url} ${JSON.stringify(req.cookies)}`
+		`Request received: ${req.method} ${req.url} ${JSON.stringify(req.body)} ${req.headers}`
   )
   next()
 })

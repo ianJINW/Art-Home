@@ -72,6 +72,17 @@ const getData = async (url: string, token?: string): Promise<DataResponse> => {
 	return req.data;
 };
 
+const postData = async (url: string, data: unknown, token?: string,) => {
+	try {
+		const req = await api.post(url, data, {
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+		});
+		return req.data;
+	} catch (e) { console.error(e) }
+};
+
 // LoginUser hook
 export const LoginUser = () => {
 	const logIn = useAuthStore((state) => state.login);
@@ -141,3 +152,19 @@ export const GetData = (url: string) => {
 		},
 	});
 };
+
+export const PostData = (url: string) => {
+	const token = useAuthStore((state) => state.accessToken);
+
+	return useMutation({
+		mutationFn: async (data: unknown) => {
+			await postData(url, data, token ?? undefined);
+		},
+		onSuccess: () => {
+			console.log("Data posted successfully");
+		},
+		onError: (error) => {
+			console.error("Post data failed:", error);
+		},
+	});
+}

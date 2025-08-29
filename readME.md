@@ -68,7 +68,7 @@ The API endpoints are available at `http://localhost:5173/api`
 
 ### Main Endpoints:
 
-- `GET /api/artworks` - Get all artworks
+- `GET /api/art` - Get all artworks
 - `POST /api/galleries` - Create a new gallery
 - `PUT /api/users/profile` - Update user profile
 

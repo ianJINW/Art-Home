@@ -18,19 +18,18 @@ import { authToken } from "./utils/jwt";
 import "./config/passport";
 
 const app = express();
-const frontend = process.env.FRONTEND_URL;
+const frontend = process.env.FRONTEND_URL as string;
+const frontend_net = process.env.FRONTEND_URL_NETWORK as string;
 const PORT = process.env.PORT;
 
 const server = http.createServer(app);
 
 app.use(
 	cors({
-		origin: frontend,
+		origin: [frontend, frontend_net],
 		credentials: true,
 	})
 );
-
-console.log("Socket initialized 2");
 
 app.use((req: Request, res: Response, next: NextFunction) => {
 	console.log(

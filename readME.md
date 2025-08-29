@@ -26,12 +26,14 @@ cd ART-HOME
 ```
 
 1. Install dependencies:
+   in one terminal
   
 ```bash
 cd client
 npm install
 ```
 
+in another terminal
 ```bash
 cd server
 npm install

@@ -53,8 +53,6 @@ app.use("/api/v1/art", artRouter);
 app.use("/api/v1/chat", chatRouter);
 app.use("/api/v1/artist", artistRouter);
 
-console.log(`Routes initialized ${Date.now()}`);
-
 connectDB();
 initializeSocket(server);
 

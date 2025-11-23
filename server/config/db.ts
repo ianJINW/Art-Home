@@ -31,7 +31,7 @@ if (!cached) {
 
 const connectDB = async () => {
 	try {
-		if (cached.conn) return cached.conn;
+		if (cached.conn) return cached.conn; 
 
 		if (!cached.promise) {
 			cached.promise = mongoose.connect(mongoURI, opts);
@@ -39,7 +39,7 @@ const connectDB = async () => {
 		const conn = await cached.promise;
 		console.log(`MongoDB Connected: ${conn?.connection.host}`);
 	} catch (err: any) {
-		console.error(`Error: ${err.message}`);
+		console.error(`Error: ${err.message} MONGODB`);
 		process.exit(1);
 	}
 };

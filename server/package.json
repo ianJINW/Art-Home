@@ -24,7 +24,9 @@
 	"scripts": {
 		"start": "nodemon",
 		"test": "jest",
-		"dev": "nodemon"
+		"dev": "nodemon",
+		"build": "tsc",
+		"lint": "eslint . --ext .ts,.tsx"
 	},
 	"dependencies": {
 		"@types/supertest": "^6.0.3",

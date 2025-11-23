@@ -35,7 +35,9 @@
     "test": "jest",
     "client": "cd client && npm run dev",
     "server": "cd server && npm run dev",
-    "dev": "concurrently \"npm run server\" \"npm run client\""
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "build": "cd client && npm run build && cd ../server && npm run build",
+    "lint": "eslint . --ext .ts,.tsx"
   },
   "repository": {
     "type": "git",

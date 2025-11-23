@@ -15,6 +15,7 @@ export interface formData {
 // Login API call
 interface LoginResponse {
 	user: {
+		_id?: string;
 		id: string;
 		username: string;
 		email: string;
@@ -31,6 +32,7 @@ const login = async (credentials: formData): Promise<LoginResponse> => {
 // Register API call
 interface RegisterResponse {
 	user: {
+		_id?: string;
 		id: string;
 		username: string;
 		email: string;
@@ -38,7 +40,7 @@ interface RegisterResponse {
 	};
 }
 
-const register = async (credentials: formData): Promise<RegisterResponse> => {
+const register = async (credentials: FormData | formData): Promise<RegisterResponse> => {
 	const req = await api.post("user/", credentials, {
 		headers: {
 			"Content-Type": "multipart/form-data",
@@ -54,11 +56,7 @@ const logOutFN = async () => {
 };
 
 // Get data API call
-interface DataResponse {
-	[key: string]: string | number | boolean | null | undefined;
-}
-
-const getData = async (url: string, token?: string): Promise<DataResponse> => {
+const getData = async <T = any>(url: string, token?: string): Promise<T> => {
 	const headers = token
 		? {
 				headers: {
@@ -67,7 +65,7 @@ const getData = async (url: string, token?: string): Promise<DataResponse> => {
 		  }
 		: {};
 
-	const req = await api.get<DataResponse>(url, headers);
+	const req = await api.get<T>(url, headers);
 
 	return req.data;
 };
@@ -141,13 +139,13 @@ export const RegisterUser = () => {
 };
 
 // GetData hook
-export const GetData = (url: string) => {
+export const GetData = <T = any>(url: string) => {
 	const token = useAuthStore((state) => state.accessToken);
 
-	return useQuery({
+	return useQuery<T>({
 		queryKey: ["data", url],
 		queryFn: async () => {
-			const data = await getData(url, token ?? undefined);
+			const data = await getData<T>(url, token ?? undefined);
 			return data;
 		},
 	});

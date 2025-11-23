@@ -96,7 +96,7 @@ const CreateChat: React.FC = () => {
               className='w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
             >
               {Array.isArray(users?.users) &&
-                users.users.map(artist => (
+                users.users.map((artist: { _id: string; username: string; email: string }) => (
                   <option
                     key={artist._id}
                     value={artist._id}

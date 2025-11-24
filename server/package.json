@@ -25,7 +25,7 @@
 		"start": "nodemon",
 		"test": "jest",
 		"dev": "nodemon",
-		"build": "tsc",
+		"build": "rm -rf ./dist && tsc --outDir ./dist",
 		"lint": "eslint . --ext .ts,.tsx"
 	},
 	"dependencies": {

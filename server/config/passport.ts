@@ -1,11 +1,13 @@
 import passport from "passport";
+import { Request } from "express";
 import {
 	ExtractJwt,
 	StrategyOptions,
 	Strategy as JwtStrategy,
 } from "passport-jwt";
-import User from "../models/userModels";
-import { Request } from "express";
+
+import User, { IUser } from "../models/userModels";
+import { JWTPayload } from "../controllers/userController";
 
 const opts: StrategyOptions = {
 	jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -14,9 +16,9 @@ const opts: StrategyOptions = {
 };
 
 passport.use(
-	new JwtStrategy(opts, async (req: Request, payload: any, done: any) => {
+	new JwtStrategy(opts, async (req: Request, payload: JWTPayload, done: (err: any, user?: IUser | false) => void) => {
 		try {
-			const user = await User.findById(payload.id);
+			const user: IUser | null = await User.findById(payload.id);
 
 			if (user) return done(null, user);
 

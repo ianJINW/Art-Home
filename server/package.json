@@ -25,7 +25,7 @@
 		"start": "nodemon",
 		"test": "jest",
 		"dev": "nodemon",
-		"build": "rm -rf ./public && tsc --outDir ./public",
+		"build": "tsc",
 		"lint": "eslint . --ext .ts,.tsx"
 	},
 	"dependencies": {

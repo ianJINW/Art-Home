@@ -1,54 +1,26 @@
 {
-  "devDependencies": {
-    "concurrently": "^9.2.1"
-  },
   "name": "art-home",
   "version": "1.0.0",
-  "description": "A digital platform for discovering and managing art collections. This web application allows users to explore, organize, and share artwork in a personalized virtual space.",
-  "main": "index.js",
-  "dependencies": {
-    "ansi-regex": "^5.0.1",
-    "ansi-styles": "^4.3.0",
-    "chalk": "^4.1.2",
-    "cliui": "^8.0.1",
-    "color-convert": "^2.0.1",
-    "color-name": "^1.1.4",
-    "emoji-regex": "^8.0.0",
-    "escalade": "^3.2.0",
-    "get-caller-file": "^2.0.5",
-    "has-flag": "^4.0.0",
-    "is-fullwidth-code-point": "^3.0.0",
-    "require-directory": "^2.1.1",
-    "rxjs": "^7.8.2",
-    "shell-quote": "^1.8.3",
-    "string-width": "^4.2.3",
-    "strip-ansi": "^6.0.1",
-    "supports-color": "^8.1.1",
-    "tree-kill": "^1.2.2",
-    "tslib": "^2.8.1",
-    "wrap-ansi": "^7.0.0",
-    "y18n": "^5.0.8",
-    "yargs": "^17.7.2",
-    "yargs-parser": "^21.1.1"
+  "private": true,
+  "description": "A digital platform for discovering and managing art collections.",
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "rimraf": "^5.0.0"
   },
   "scripts": {
-    "test": "jest",
-    "client": "cd client && npm run dev",
-    "server": "cd server && npm run dev",
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "build": "cd client && npm run build && cd ../server && npm run build",
-    "lint": "eslint . --ext .ts,.tsx"
+    "build": "concurrently --names \"FE,BE\" --prefix-colors \"cyan,magenta\" \"npm run build --prefix client\" \"npm run build --prefix server\"",
+    "start": "concurrently --names \"FE,BE\" --prefix-colors \"red,blue\" \"npm start --prefix client\" \"npm start --prefix server\"",
+    "dev": "concurrently --names \"FE,BE\" --prefix-colors \"green,magenta\" \"npm run dev --prefix client\" \"npm run dev --prefix server\"",
+    "test": "concurrently --names \"FE,BE\" --prefix-colors \"gray,white\" \"npm test --prefix client\" \"npm test --prefix server\"",
+    "install-all": "concurrently --names \"FE,BE\" --prefix-colors \"green,cyan\" \"npm install --prefix client\" \"npm install --prefix server\"",
+    "update": "concurrently --names \"FE,BE\" --prefix-colors \"blue,yellow\" \"npm update --prefix client\" \"npm update --prefix server\""
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ianJINW/Art-Home.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/ianJINW/Art-Home/issues"
-  },
-  "homepage": "https://github.com/ianJINW/Art-Home#readme"
+  "license": "ISC"
 }

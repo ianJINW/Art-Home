@@ -1,12 +1,20 @@
-import { cloudinary } from '../middleware/multer'
 import jwt from 'jsonwebtoken'
-
-import User from '../models/userModels'
-import { Request, Response } from 'express'
 import mongoose from 'mongoose'
+import { Request, Response } from 'express'
+
+import type { AuthRequest } from '../types'
+import User from '../models/userModels'
 import transactione from '../utils/transactions'
+import { cloudinary } from '../middleware/multer'
 
 const secretKey = process.env.JWT_SECRET as string
+
+export interface JWTPayload {
+  id: string,
+  email: string,
+  username: string,
+  isAdmin: boolean
+}
 
 const registerUser = async (
   session: mongoose.ClientSession,
@@ -103,6 +111,7 @@ export const loginUser = async (
 
   try {
     const user = await User.findOne({ email })
+
     if (!user) {
       res.status(400).json({ message: 'User does not exist' })
       return
@@ -114,7 +123,13 @@ export const loginUser = async (
       return
     }
 
-    const { password, ...payload } = user.toObject()
+    const payload: JWTPayload = {
+      id: user._id,
+      email: user.email,
+      username: user.username,
+      isAdmin: user.isAdmin
+    }
+
     const token = jwt.sign(payload, secretKey, { expiresIn: '1h' })
     const refreshToken = jwt.sign(payload, secretKey, { expiresIn: '5h' })
 
@@ -129,7 +144,7 @@ export const loginUser = async (
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 3600000
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     })
 
     user.lastLogin = new Date()
@@ -177,7 +192,7 @@ export const refreshToken = async (req: Request, res: Response) => {
       { expiresIn: '1h' }
     )
 
-    res.cookie(`refreshCookie`, newToken, {
+    res.cookie(`accessToken`, newToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
@@ -243,7 +258,10 @@ export const update = async (
 
     user.username = req.body.username || user.username
     user.email = req.body.email || user.email
-    user.isAdmin = req.body.isAdmin || user.isAdmin
+
+    if ((req as AuthRequest).user?.role === 'admin') {
+      user.isAdmin = req.body.isAdmin ?? user.isAdmin
+    }
     await user.save({ session })
 
     res.json({ message: 'User updated' })

@@ -33,8 +33,7 @@ app.use(
 
 app.use((req: Request, res: Response, next: NextFunction) => {
 	console.log(
-		`Request received: ${req.method} ${req.url} ${JSON.stringify(req.body)} ${
-			req.headers
+		`Request received: ${req.method} ${req.url} ${JSON.stringify(req.body)} ${req.headers
 		}`
 	);
 	next();

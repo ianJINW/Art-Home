@@ -7,7 +7,7 @@ export const validateObjectId = (
 	next: NextFunction
 ) => {
 	const { id } = req.params;
-	if (!mongoose.Types.ObjectId.isValid(id)) {
+	if (!mongoose.Types.ObjectId.isValid(Number(id))) {
 		res.status(400).json({ message: "Invalid ID format" });
 		return;
 	}

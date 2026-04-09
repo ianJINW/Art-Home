@@ -5,12 +5,13 @@ export interface AuthenticatedUser {
 	image?: string
 	bio?: string
 	blockedUsers: string[]
+	isAdmin?: boolean
 }
 
 import mongoose, { Types } from 'mongoose'
 import { ChatRoom, IMessage, Message } from '../models/chatModel'
 import { Request, Response } from 'express'
-import User from '../models/userModels'
+import User, { IUser } from '../models/userModels'
 import transactione from '../utils/transactions'
 import newMessage from '../utils/sender'
 
@@ -28,7 +29,7 @@ const newChatFn = async (
 			res.status(401).json({ error: 'Unauthorized: User not authenticated' })
 			return
 		}
-		const me = (req.user as any)._id
+		const me = (req.user as IUser)._id
 
 		const other = await User.findById(chatee)
 		if (!other) {
